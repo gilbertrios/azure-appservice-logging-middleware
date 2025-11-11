@@ -8,17 +8,15 @@ public static class ObfuscationMiddlewareExtensions
     /// <summary>
     /// Adds ObfuscationMiddleware to the application pipeline.
     /// </summary>
-    public static IApplicationBuilder UseObfuscationMiddleware(
-        this IApplicationBuilder app,
-        Action<ObfuscationOptions>? configureOptions = null)
+    public static IApplicationBuilder UseObfuscationMiddleware(this IApplicationBuilder app)
     {
-        var options = new ObfuscationOptions();
-        configureOptions?.Invoke(options);
+        // Get options from DI container (registered by AddObfuscationMiddleware)
+        var options = app.ApplicationServices.GetRequiredService<ObfuscationOptions>();
 
         if (!options.Enabled)
             return app;
 
-        return app.UseMiddleware<ObfuscationMiddleware>(options);
+        return app.UseMiddleware<ObfuscationMiddleware>();
     }
 
     /// <summary>
