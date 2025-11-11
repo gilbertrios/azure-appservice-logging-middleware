@@ -1,6 +1,13 @@
 using AzureAppServiceLoggingMiddleware.Infrastructure;
+using AzureAppServiceLoggingMiddleware.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add Application Insights telemetry
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+});
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -17,11 +24,28 @@ builder.Services.AddSwaggerGen(options =>
 // Register all modules (auto-discovers OrderModule and PaymentModule)
 builder.Services.RegisterModules();
 
+// Configure obfuscation middleware
+builder.Services.AddObfuscationMiddleware(options =>
+{
+    options.Enabled = builder.Configuration.GetValue<bool>("ObfuscationMiddleware:Enabled", true);
+    options.ObfuscationMask = builder.Configuration.GetValue<string>("ObfuscationMiddleware:ObfuscationMask") 
+        ?? "***REDACTED***";
+    
+    var sensitiveProps = builder.Configuration.GetSection("ObfuscationMiddleware:SensitiveProperties").Get<List<string>>();
+    if (sensitiveProps != null)
+    {
+        options.SensitiveProperties = sensitiveProps;
+    }
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Enable obfuscation middleware (must be before UseHttpsRedirection to capture full bodies)
+app.UseObfuscationMiddleware();
 
 app.UseHttpsRedirection();
 
