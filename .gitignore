@@ -1,0 +1,57 @@
+# .NET Build Artifacts
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+[Pp]ackages/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+
+# IDE & Editor Files
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.code-workspace
+
+# Build & Test Results
+TestResult.xml
+*.log
+*.tlog
+*.pdb
+
+# Publish Outputs
+publish/
+*.pubxml
+*.publishproj
+
+# Azure
+*.azurePubxml
+PublishScripts/
+
+# Database Files
+*.mdf
+*.ldf
+*.ndf
+
+# Test Coverage
+coverage*.json
+coverage*.xml
+*.coverage
+
+# Operating System Files
+# macOS
+.DS_Store
+._*
+# Windows
+Thumbs.db
+desktop.ini
