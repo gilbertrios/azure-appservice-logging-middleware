@@ -61,16 +61,15 @@ This directory contains GitHub Actions workflows and deployment scripts for cont
 ## 📁 Structure
 
 ```
-.github/workflows/                 # Active GitHub Actions workflows
+.github/workflows/                 # GitHub Actions workflows
 └── deploy-blue-green.yml          # Main deployment pipeline
 
 devops/
-├── workflows/
-│   └── deploy-blue-green.yml      # Workflow template (source copy)
+├── scripts/                       # Deployment helper scripts
+│   ├── swap-slots.sh              # Manual slot swap
+│   └── validate-deployment.sh     # Deployment validation
 │
-└── scripts/
-    ├── swap-slots.sh              # Manual slot swap helper
-    └── validate-deployment.sh     # Deployment validation
+└── README.md                      # DevOps documentation
 ```
 
 ## 🔧 Setup
@@ -107,9 +106,7 @@ az ad sp create-for-rbac \
 
 ### 3. Verify Workflow Location
 
-The workflow is already in the correct location:
-- **Active workflow**: `.github/workflows/deploy-blue-green.yml` (executed by GitHub)
-- **Template copy**: `devops/workflows/deploy-blue-green.yml` (for reference/docs)
+The workflow is at `.github/workflows/deploy-blue-green.yml` (GitHub's required location).
 
 Commit and push if not already done:
 

@@ -36,12 +36,9 @@ azure-appservice-logging-middleware/
 │
 ├── .github/
 │   └── workflows/
-│       └── deploy-blue-green.yml         # Active deployment pipeline (executed)
+│       └── deploy-blue-green.yml         # Deployment pipeline (executed by GitHub)
 │
 ├── devops/                                # CI/CD Scripts & Docs
-│   ├── workflows/
-│   │   └── deploy-blue-green.yml         # Pipeline template (source copy)
-│   │
 │   ├── scripts/
 │   │   ├── swap-slots.sh                 # Manual slot swap
 │   │   └── validate-deployment.sh        # Deployment validation
@@ -82,20 +79,20 @@ Terraform configurations for provisioning Azure resources:
 - `terraform/environments/dev/main.tf` - Dev environment resources
 - `terraform/modules/app-service/` - Reusable App Service module
 
-### `/.github/workflows` - Active CI/CD Workflows
-GitHub Actions workflows that are executed on push/PR:
-- `.github/workflows/deploy-blue-green.yml` - Active deployment pipeline
+### `/.github/workflows` - CI/CD Workflows
+GitHub Actions workflows executed on push/PR:
+- `deploy-blue-green.yml` - 6-stage deployment pipeline
 
 ### `/devops` - CI/CD Scripts & Documentation
-Deployment automation scripts and pipeline documentation:
+Deployment automation scripts and DevOps documentation:
 - Helper scripts for manual operations
-- Pipeline templates and examples
+- Deployment validation utilities
 - DevOps process documentation
 
 **Key Files:**
-- `workflows/deploy-blue-green.yml` - Pipeline template (source)
 - `scripts/swap-slots.sh` - Manual slot swap utility
 - `scripts/validate-deployment.sh` - Deployment health checks
+- `README.md` - DevOps guide and pipeline documentation
 
 ### `/docs` - Documentation
 Architecture decisions, patterns, and comparisons:

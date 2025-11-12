@@ -81,10 +81,6 @@ Verify it exists:
 # Check if workflow exists
 ls -la .github/workflows/deploy-blue-green.yml
 
-# If not, copy from template
-mkdir -p .github/workflows
-cp devops/workflows/deploy-blue-green.yml .github/workflows/
-
 # Commit and push
 git add .github/workflows/
 git commit -m "chore: add deployment workflow"
