@@ -320,7 +320,7 @@ Each module has clear boundaries and can be independently deployed.
 
 ### Application
 - **.NET 9.0** - ASP.NET Core minimal APIs
-- **C# 12** - Records, pattern matching, modern features
+- **C# 13** - Records, pattern matching, modern features
 - **Application Insights** - Azure monitoring and telemetry
 - **Swagger/OpenAPI** - API documentation
 
