@@ -78,7 +78,13 @@ public class ObfuscationMiddleware
     private async Task<string> CaptureResponseBodyAsync(MemoryStream responseStream)
     {
         responseStream.Seek(0, SeekOrigin.Begin);
-        var body = await new StreamReader(responseStream).ReadToEndAsync();
+        using var reader = new StreamReader(
+            responseStream,
+            encoding: System.Text.Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: false,
+            leaveOpen: true);
+        
+        var body = await reader.ReadToEndAsync();
         responseStream.Seek(0, SeekOrigin.Begin);
         return body;
     }

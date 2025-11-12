@@ -25,6 +25,10 @@ The API will start at:
   /Infrastructure
     - IModule.cs              # Module interface
     - ModuleExtensions.cs     # Auto-discovery extensions
+  /Middleware
+    - ObfuscationMiddleware.cs           # Request/response obfuscation middleware
+    - ObfuscationOptions.cs              # Configuration model
+    - ObfuscationMiddlewareExtensions.cs # DI extensions
   /Modules
     /Orders
       - OrderModule.cs        # Order endpoints (7 endpoints)
@@ -38,7 +42,8 @@ The API will start at:
       - IPaymentService.cs    # Payment service interface
       /Models
         - PaymentDto.cs       # Payment DTOs and enums
-  - Program.cs                # Application entry point
+  - Program.cs                # Application entry point with middleware configured
+  - appsettings.json          # Configuration including obfuscation settings
   - AzureAppServiceLoggingMiddleware.csproj
 ```
 
@@ -94,23 +99,24 @@ curl -X POST https://localhost:5001/api/orders \
 
 ### Get All Orders
 ```bash
-curl https://localhost:5001/api/orders
+curl http://localhost:5000/api/orders
 ```
 
-### Process Payment
+### Process Payment (includes sensitive data for obfuscation testing)
 ```bash
-curl -X POST https://localhost:5001/api/payments/process \
+curl -X POST http://localhost:5000/api/payments/process \
   -H "Content-Type: application/json" \
   -d '{
     "orderId": 1,
     "amount": 299.99,
     "method": "CreditCard",
-    "cardNumber": "4111111111111111",
-    "cardHolderName": "John Doe",
-    "expiryDate": "12/25",
-    "cvv": "123"
+    "creditCard": "1234-5678-9012-3456",
+    "cvv": "123",
+    "token": "secret-api-key"
   }'
 ```
+
+**Note:** The `creditCard`, `cvv`, and `token` fields will be obfuscated in logs.
 
 ### Get Payment by Order
 ```bash
@@ -134,25 +140,95 @@ curl -X POST https://localhost:5001/api/payments/1/refund \
 
 ## Features
 
+✅ **Obfuscation Middleware** - Automatically obfuscates sensitive data in request/response logs
+✅ **Application Insights Integration** - Logs flow to Azure Application Insights with custom properties
 ✅ **Module Auto-Discovery** - Modules are automatically discovered and registered
 ✅ **Clean Architecture** - Each module is self-contained with models, services, and endpoints
 ✅ **Swagger/OpenAPI** - Full API documentation at /swagger
 ✅ **In-Memory Storage** - Pre-populated with sample data (ready for real DB)
-✅ **Minimal APIs** - Lightweight, fast, modern .NET 8
-✅ **Logging** - Built-in logging for all operations
+✅ **Minimal APIs** - Lightweight, fast, modern .NET 9
+✅ **Logging** - Built-in logging for all operations with obfuscated request/response bodies
 ✅ **Type Safety** - Records and strong typing throughout
+✅ **Configurable Masking** - Control which properties to obfuscate via appsettings.json
+
+## Obfuscation Middleware
+
+The API includes a custom middleware that automatically obfuscates sensitive data in logs.
+
+### How It Works
+
+1. **Captures** request and response bodies without modifying them
+2. **Recursively traverses** JSON to find sensitive properties
+3. **Obfuscates** matching properties (case-insensitive)
+4. **Logs** obfuscated versions to console and Application Insights
+
+### Configuration
+
+Edit `appsettings.json` to control which properties are obfuscated:
+
+```json
+{
+  "ObfuscationMiddleware": {
+    "Enabled": true,
+    "ObfuscationMask": "***REDACTED***",
+    "SensitiveProperties": [
+      "password",
+      "creditCard",
+      "creditCardNumber",
+      "cardNumber",
+      "cvv",
+      "ssn",
+      "apiKey",
+      "token",
+      "authorization"
+    ]
+  }
+}
+```
+
+### Test Obfuscation
+
+```bash
+# Send request with sensitive data
+curl -X POST http://localhost:5000/api/payments/process \
+  -H "Content-Type: application/json" \
+  -d '{
+    "orderId": 1,
+    "amount": 59.99,
+    "method": "CreditCard",
+    "creditCard": "1234-5678-9012-3456",
+    "cvv": "123",
+    "token": "secret-token"
+  }'
+```
+
+**Check the console logs** - you'll see:
+```
+Obfuscated Request: {"orderId":1,"amount":59.99,"creditCard":"***REDACTED***","cvv":"***REDACTED***","token":"***REDACTED***"}
+```
+
+### Application Insights
+
+The middleware logs custom properties that flow to Application Insights:
+- `RequestPath` - The endpoint called
+- `RequestMethod` - HTTP method (POST, GET, etc.)
+- `StatusCode` - Response status code
+- `ObfuscatedRequest` - Request body with sensitive data masked
+- `ObfuscatedResponse` - Response body with sensitive data masked
+
+**To enable Application Insights:**
+1. Create Application Insights resource in Azure
+2. Copy connection string
+3. Update `appsettings.json`:
+```json
+{
+  "ApplicationInsights": {
+    "ConnectionString": "InstrumentationKey=xxxxx;IngestionEndpoint=https://..."
+  }
+}
+```
 
 ## Next Steps
-
-### Add Your Obfuscation Middleware
-
-1. Update `Program.cs` to use your middleware:
-```csharp
-// After app.Build()
-app.UseObfuscationMiddleware(); // Add this line
-app.UseHttpsRedirection();
-app.MapEndpoints();
-```
 
 ### Add Database
 
