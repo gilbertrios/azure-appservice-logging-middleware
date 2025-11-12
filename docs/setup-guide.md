@@ -71,17 +71,22 @@ az ad sp create-for-rbac \
 |-------------|-------|
 | `AZURE_CREDENTIALS` | The entire JSON output from Step 2 |
 
-### Step 4: Copy Workflow to GitHub Actions Directory
+### Step 4: Verify Workflow is in Place
+
+The workflow should already be at `.github/workflows/deploy-blue-green.yml`.
+
+Verify it exists:
 
 ```bash
-# Create .github/workflows directory
-mkdir -p .github/workflows
+# Check if workflow exists
+ls -la .github/workflows/deploy-blue-green.yml
 
-# Copy the deployment workflow
+# If not, copy from template
+mkdir -p .github/workflows
 cp devops/workflows/deploy-blue-green.yml .github/workflows/
 
 # Commit and push
-git add .github/workflows/deploy-blue-green.yml
+git add .github/workflows/
 git commit -m "chore: add deployment workflow"
 git push origin main
 ```
