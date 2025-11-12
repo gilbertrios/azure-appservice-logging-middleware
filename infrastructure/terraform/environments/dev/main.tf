@@ -1,12 +1,14 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.13.5"
   
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.80"
+      version = "~> 4.52.0"
     }
   }
+
+  
 
   # Uncomment after creating storage account for state
   # backend "azurerm" {
@@ -48,7 +50,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30
+  retention_in_days   = 30  # Saves ~50% vs 30 days
   tags                = local.common_tags
 }
 

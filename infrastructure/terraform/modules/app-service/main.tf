@@ -22,11 +22,12 @@ resource "azurerm_linux_web_app" "main" {
     http2_enabled    = true
     
     application_stack {
-      dotnet_version = "8.0"
+      dotnet_version = "9.0"
     }
 
     # Health check configuration
     health_check_path = "/health"
+    health_check_eviction_time_in_min = "2"
     
     # CORS settings (adjust as needed)
     cors {
@@ -71,11 +72,13 @@ resource "azurerm_linux_web_app_slot" "green" {
     http2_enabled    = true
     
     application_stack {
-      dotnet_version = "8.0"
+      dotnet_version = "9.0"
     }
 
     # Health check configuration
     health_check_path = "/health"
+    health_check_eviction_time_in_min = "2"
+ 
     
     # CORS settings
     cors {

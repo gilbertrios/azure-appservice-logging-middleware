@@ -1,0 +1,53 @@
+# Terraform files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variable files with secrets (exclude from git)
+# Note: terraform.tfvars is tracked for dev environment
+# Add specific files here if they contain secrets
+secrets.tfvars
+*.secret.tfvars
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Plan files (optional - uncomment if you don't want to commit plan outputs)
+# *.tfplan
+# tfplan

@@ -15,8 +15,8 @@ on:
           - dev
 
 env:
-  DOTNET_VERSION: '8.0.x'
-  TERRAFORM_VERSION: '1.5.0'
+  DOTNET_VERSION: '9.0.x'
+  TERRAFORM_VERSION: '1.13.5'
   AZURE_REGION: 'eastus'
 
 jobs:
