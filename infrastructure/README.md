@@ -1,0 +1,181 @@
+# Infrastructure as Code (IaC)
+
+This directory contains all Infrastructure as Code (IaC) for provisioning Azure resources.
+
+## 🏗️ Architecture
+
+### Dev Environment Resources
+
+```
+Resource Group: rg-logmw-dev
+├── App Service Plan: asp-logmw-dev (Linux, B1)
+├── App Service: app-logmw-dev
+│   ├── Production Slot (default)
+│   └── Green Slot (for blue-green deployments)
+├── Application Insights: appi-logmw-dev
+└── Log Analytics Workspace: log-logmw-dev
+```
+
+## 📁 Structure
+
+```
+infrastructure/
+├── terraform/
+│   ├── environments/
+│   │   └── dev/                    # Dev environment configuration
+│   │       ├── main.tf             # Main resources
+│   │       ├── variables.tf        # Input variables
+│   │       ├── outputs.tf          # Output values
+│   │       └── terraform.tfvars    # Dev-specific values
+│   │
+│   └── modules/
+│       └── app-service/            # Reusable App Service module
+│           ├── main.tf             # App Service + slots
+│           ├── variables.tf
+│           ├── outputs.tf
+│           └── README.md
+│
+└── scripts/
+    └── terraform-init.sh           # Helper script
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+1. **Azure CLI** installed and authenticated
+2. **Terraform** >= 1.5.0 installed
+3. **Azure subscription** with contributor access
+
+### Deploy Dev Environment
+
+```bash
+# Login to Azure
+az login
+
+# Navigate to dev environment
+cd infrastructure/terraform/environments/dev
+
+# Initialize Terraform
+terraform init
+
+# Review planned changes
+terraform plan
+
+# Apply infrastructure
+terraform apply
+
+# View outputs
+terraform output
+```
+
+## 🔧 Configuration
+
+### Dev Environment (`terraform.tfvars`)
+
+```hcl
+location         = "eastus"
+app_service_sku = "B1"  # Basic tier for dev
+```
+
+### Available SKUs
+
+| SKU | Description | Use Case |
+|-----|-------------|----------|
+| B1 | Basic - 1 core, 1.75 GB RAM | Development |
+| S1 | Standard - 1 core, 1.75 GB RAM | Staging |
+| P1v2 | Premium - 1 core, 3.5 GB RAM | Production |
+| P2v2 | Premium - 2 cores, 7 GB RAM | Production (high traffic) |
+
+## 📊 Outputs
+
+After `terraform apply`, you'll get:
+
+```bash
+app_service_name              = "app-logmw-dev"
+app_service_default_hostname  = "app-logmw-dev.azurewebsites.net"
+app_service_green_hostname    = "app-logmw-dev-green.azurewebsites.net"
+resource_group_name           = "rg-logmw-dev"
+```
+
+## 🔄 Blue-Green Deployment Slots
+
+### Slot Configuration
+
+- **Production Slot** - Current live version
+- **Green Slot** - New version for testing
+
+### Deployment Flow
+
+```
+1. Deploy → Green Slot (staging)
+2. Test → Run smoke tests on green
+3. Swap → Green becomes production (instant)
+4. Rollback → Swap back if issues (previous version in green)
+```
+
+### Manual Slot Swap
+
+```bash
+# Swap green to production
+az webapp deployment slot swap \
+  --resource-group rg-logmw-dev \
+  --name app-logmw-dev \
+  --slot green \
+  --target-slot production
+```
+
+## 🔐 State Management
+
+### Local State (Current)
+
+Terraform state is stored locally. For production use, configure remote state:
+
+### Remote State (Recommended)
+
+```hcl
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-terraform-state"
+    storage_account_name = "stterraformstate"
+    container_name       = "tfstate"
+    key                  = "dev.terraform.tfstate"
+  }
+}
+```
+
+## 🧪 Validation
+
+```bash
+# Validate configuration
+terraform validate
+
+# Format code
+terraform fmt -recursive
+
+# Check for security issues (if using tfsec)
+tfsec .
+```
+
+## 🗑️ Cleanup
+
+```bash
+# Destroy all resources (use with caution!)
+cd infrastructure/terraform/environments/dev
+terraform destroy
+```
+
+## 📝 Best Practices
+
+✅ **Use modules** for reusable infrastructure  
+✅ **Tag all resources** for cost tracking  
+✅ **Enable diagnostics** on all services  
+✅ **Use Key Vault** for secrets (add when needed)  
+✅ **Enable App Service authentication** for production  
+✅ **Configure alerts** in Application Insights  
+
+## 🔗 Resources
+
+- [Terraform Azure Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+- [Azure App Service Docs](https://docs.microsoft.com/azure/app-service/)
+- [Deployment Slots Best Practices](https://docs.microsoft.com/azure/app-service/deploy-best-practices)
