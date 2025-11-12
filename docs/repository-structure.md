@@ -7,24 +7,24 @@ This document describes the organization of the repository.
 ```
 azure-appservice-logging-middleware/
 │
-├── app/                                    # .NET 9.0 Application Code
-│   ├── Infrastructure/                     # Core infrastructure patterns
-│   ├── Middleware/                         # Obfuscation middleware
+├── app/                                   # .NET 9.0 Application Code
+│   ├── Infrastructure/                    # Core infrastructure patterns
+│   ├── Middleware/                        # Obfuscation middleware
 │   ├── Modules/                           # Feature modules (Orders, Payments)
 │   ├── Program.cs                         # Application entry point
-│   └── *.csproj                          # Project file
+│   └── *.csproj                           # Project file
 │
-├── infrastructure/                         # Infrastructure as Code (Terraform)
+├── infrastructure/                        # Infrastructure as Code (Terraform)
 │   ├── terraform/
 │   │   ├── environments/
 │   │   │   └── dev/                       # Dev environment config
-│   │   │       ├── main.tf               # Main resources
-│   │   │       ├── variables.tf          # Input variables
-│   │   │       ├── outputs.tf            # Output values
-│   │   │       └── terraform.tfvars      # Dev-specific values
+│   │   │       ├── main.tf                # Main resources
+│   │   │       ├── variables.tf           # Input variables
+│   │   │       ├── outputs.tf             # Output values
+│   │   │       └── terraform.tfvars       # Dev-specific values
 │   │   │
 │   │   └── modules/
-│   │       └── app-service/              # App Service module with slots
+│   │       └── app-service/               # App Service module with slots
 │   │           ├── main.tf
 │   │           ├── variables.tf
 │   │           └── outputs.tf
@@ -38,20 +38,20 @@ azure-appservice-logging-middleware/
 │   └── workflows/
 │       └── deploy-blue-green.yml         # Deployment pipeline (executed by GitHub)
 │
-├── devops/                                # CI/CD Scripts & Docs
+├── devops/                               # CI/CD Scripts & Docs
 │   ├── scripts/
 │   │   ├── swap-slots.sh                 # Manual slot swap
 │   │   └── validate-deployment.sh        # Deployment validation
 │   │
 │   └── README.md                         # DevOps documentation
 │
-├── docs/                                  # Documentation
+├── docs/                                 # Documentation
 │   ├── app-service-vs-functions.md
 │   ├── microservice-split-criteria.md
 │   ├── module-pattern.md
 │   └── pipeline-comparison.md
 │
-└── README.md                              # Main repository README
+└── README.md                             # Main repository README
 ```
 
 ## 🎯 Folder Purpose

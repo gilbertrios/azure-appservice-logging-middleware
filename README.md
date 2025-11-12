@@ -84,6 +84,10 @@ curl -X POST http://localhost:5000/api/payments/process \
 
 ```
 azure-appservice-logging-middleware/
+├── .github/
+│   └── workflows/
+│       └── deploy-blue-green.yml     # 6-stage deployment pipeline
+│
 ├── app/                              # .NET 9.0 Application
 │   ├── Infrastructure/               # Module pattern implementation
 │   ├── Middleware/                   # Obfuscation middleware
@@ -92,13 +96,13 @@ azure-appservice-logging-middleware/
 │
 ├── infrastructure/                   # Terraform IaC
 │   ├── terraform/
-│   │   ├── environments/dev/         # Dev environment config
-│   │   └── modules/app-service/      # App Service with slots
+│   │   ├── environments/
+│   │   │   └── dev/                  # Dev environment config
+│   │   └── modules/
+│   │       └── app-service/          # App Service with slots
 │   └── scripts/
 │
-├── devops/                          # CI/CD Pipelines
-│   ├── workflows/
-│   │   └── deploy-blue-green.yml    # 6-stage deployment
+├── devops/                          # CI/CD Scripts & Docs
 │   └── scripts/
 │
 └── docs/                            # Documentation
