@@ -7,7 +7,7 @@ This document describes the organization of the repository.
 ```
 azure-appservice-logging-middleware/
 │
-├── app/                                    # .NET 8.0 Application Code
+├── app/                                    # .NET 9.0 Application Code
 │   ├── Infrastructure/                     # Core infrastructure patterns
 │   ├── Middleware/                         # Obfuscation middleware
 │   ├── Modules/                           # Feature modules (Orders, Payments)
@@ -57,7 +57,7 @@ azure-appservice-logging-middleware/
 ## 🎯 Folder Purpose
 
 ### `/app` - Application Code
-Contains the .NET 8.0 minimal API application featuring:
+Contains the .NET 9.0 minimal API application featuring:
 - Obfuscation middleware for sensitive data
 - Modular architecture (Orders, Payments modules)
 - Application Insights integration

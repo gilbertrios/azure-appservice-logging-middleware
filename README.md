@@ -84,7 +84,7 @@ curl -X POST http://localhost:5000/api/payments/process \
 
 ```
 azure-appservice-logging-middleware/
-├── app/                              # .NET 8.0 Application
+├── app/                              # .NET 9.0 Application
 │   ├── Infrastructure/               # Module pattern implementation
 │   ├── Middleware/                   # Obfuscation middleware
 │   ├── Modules/                      # Orders & Payments modules
@@ -319,7 +319,7 @@ Each module has clear boundaries and can be independently deployed.
 ## 🛠️ Tech Stack
 
 ### Application
-- **.NET 8.0** - ASP.NET Core minimal APIs
+- **.NET 9.0** - ASP.NET Core minimal APIs
 - **C# 12** - Records, pattern matching, modern features
 - **Application Insights** - Azure monitoring and telemetry
 - **Swagger/OpenAPI** - API documentation
@@ -367,7 +367,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - ✅ Modular architecture (Orders, Payments modules)
 - ✅ Custom middleware (obfuscation)
 - ✅ Clean code and SOLID principles
-- ✅ Modern .NET 8.0 patterns
+- ✅ Modern .NET 9.0 patterns
 
 ### Cloud & Observability
 - ✅ Azure App Service deployment slots

@@ -230,7 +230,7 @@ Legacy Invoice Service:
 - Must maintain for 3 years
 
 New Analytics Service:
-- .NET 8 (Linux containers)
+- .NET 9 (Linux containers)
 - PostgreSQL + Redis
 - Modern architecture
 - Rapid feature development

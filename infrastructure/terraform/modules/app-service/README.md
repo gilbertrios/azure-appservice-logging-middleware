@@ -10,7 +10,7 @@ This module creates an Azure App Service with support for blue-green deployments
 
 ## Features
 
-- ✅ Linux-based App Service with .NET 8.0
+- ✅ Linux-based App Service with .NET 9.0
 - ✅ HTTPS enforcement
 - ✅ Health check endpoint configured
 - ✅ Application logging enabled

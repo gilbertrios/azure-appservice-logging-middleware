@@ -72,7 +72,7 @@ For our microservices architecture with obfuscation middleware, blue/green deplo
 
 ### Nice-to-Have Requirements
 
-- C# / .NET 8 support (both provide)
+- C# / .NET 9 support (both provide)
 - VNet integration (both provide with appropriate tiers)
 - Managed Identity support (both provide)
 - Custom domains and SSL (both provide)
@@ -572,7 +572,7 @@ Problems:
 - ✅ Blue/green deployments required
 - ✅ Custom obfuscation middleware
 - ✅ Always-on performance needed
-- ✅ ASP.NET Core / .NET 8
+- ✅ ASP.NET Core / .NET 9
 - ✅ Application Insights logging
 
 **Result: App Services are the perfect fit** 🎯

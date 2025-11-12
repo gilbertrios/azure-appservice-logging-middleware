@@ -9,7 +9,7 @@ Before you begin, ensure you have:
 - ✅ **Azure Subscription** with contributor access
 - ✅ **Azure CLI** installed (`az --version`)
 - ✅ **Terraform** >= 1.5.0 installed (`terraform --version`)
-- ✅ **.NET 8.0 SDK** installed (`dotnet --version`)
+- ✅ **.NET 9.0 SDK** installed (`dotnet --version`)
 - ✅ **GitHub Account** with repository access
 - ✅ **Git** installed
 

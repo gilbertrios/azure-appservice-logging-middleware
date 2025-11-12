@@ -1,6 +1,6 @@
 # Project Summary
 
-**Azure App Service Logging Middleware** - A production-ready .NET 8.0 minimal API showcasing Infrastructure as Code, DevOps best practices, and secure logging with automatic data obfuscation.
+**Azure App Service Logging Middleware** - A production-ready .NET 9.0 minimal API showcasing Infrastructure as Code, DevOps best practices, and secure logging with automatic data obfuscation.
 
 ## 🎯 Project Goals
 
@@ -24,7 +24,7 @@ This repository demonstrates:
 
 ### Infrastructure (Terraform)
 
-✅ **Azure App Service** - Linux-based with .NET 8.0  
+✅ **Azure App Service** - Linux-based with .NET 9.0  
 ✅ **Deployment Slots** - Production + Green for blue-green deployments  
 ✅ **Application Insights** - Integrated logging and monitoring  
 ✅ **Log Analytics** - Centralized log storage  
@@ -44,7 +44,7 @@ This repository demonstrates:
 ### Repository Structure
 
 ```
-├── app/                    # .NET 8.0 Application
+├── app/                    # .NET 9.0 Application
 ├── infrastructure/         # Terraform (IaC)
 ├── devops/                # GitHub Actions + Scripts
 └── docs/                  # Documentation
@@ -127,7 +127,7 @@ See [Setup Guide](setup-guide.md) for detailed instructions.
 - ☑️ Bash scripting
 
 ### Development
-- ☑️ .NET 8.0 / C# 12
+- ☑️ .NET 9.0 / C# 13
 - ☑️ Minimal APIs
 - ☑️ Custom middleware
 - ☑️ Dependency injection
