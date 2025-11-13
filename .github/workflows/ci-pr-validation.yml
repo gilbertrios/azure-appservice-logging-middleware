@@ -1,0 +1,93 @@
+name: CI - Pull Request Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - 'infrastructure/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read        # Read repository content
+  pull-requests: write  # Comment on PRs
+  issues: write         # Comment on issues (PRs are issues)    
+
+env:
+  TERRAFORM_VERSION: '1.13.5'
+
+jobs:
+  build-app:
+    name: Build and Test Application
+    uses: ./.github/workflows/_build-app.yml
+    with:
+      dotnet-version: '9.0.x'
+
+  terraform-validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set Azure Environment Variables for Terraform
+        run: |
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+
+      - name: Terraform Format Check
+        working-directory: ./infrastructure/terraform/environments/dev
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ./infrastructure/terraform/environments/dev
+        run: |
+          terraform init 
+          terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: ./infrastructure/terraform/environments/dev
+        run: |
+          terraform init 
+          terraform plan -out=tfplan -no-color
+          terraform show -no-color tfplan > plan-output.txt
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+                const plan = fs.readFileSync('./infrastructure/terraform/environments/dev/plan-output.txt', 'utf8');
+                const truncatedPlan = plan.length > 65000 ? plan.substring(0, 65000) + '\n... (truncated)' : plan;
+                github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## Terraform Plan for \`dev\` environment\n\`\`\`terraform\n${truncatedPlan}\n\`\`\``
+                });
+            } catch (error) {
+                console.log('Error reading plan file:', error.message);
+                github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## Terraform Plan for \`dev\` environment\n\`\`\`\nError reading plan output: ${error.message}\n\`\`\``
+                });
+            }
+          
+ 

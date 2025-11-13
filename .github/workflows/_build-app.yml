@@ -1,0 +1,57 @@
+name: Build Application
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-version:
+        description: '.NET SDK version to use'
+        required: false
+        type: string
+        default: '9.0.x'    
+    outputs:
+      artifact-name:
+        description: "Name of the build artifact"
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+jobs:
+  build:
+    name: Build .NET Application
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.set-output.outputs.artifact-name }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+
+      - name: Restore dependencies
+        working-directory: ./app
+        run: dotnet restore
+
+      - name: Build application
+        working-directory: ./app
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run unit tests
+        working-directory: ./app
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Publish application
+        working-directory: ./app
+        run: dotnet publish --configuration Release --no-build --output ../publish
+
+      - name: Set artifact name
+        id: set-output
+        run: echo "artifact-name=dotnet-app" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-app
+          path: ./publish
+          retention-days: 30
