@@ -47,7 +47,9 @@ jobs:
 
       - name: Terraform Validate
         working-directory: ./infrastructure/terraform/environments/dev
-        run: terraform validate
+        run: |
+          terraform init 
+          terraform validate
 
       - name: Terraform Plan
         id: plan
