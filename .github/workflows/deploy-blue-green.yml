@@ -88,43 +88,43 @@ jobs:
       - name: '✅ Stage 2 Complete'
         run: echo "Infrastructure provisioned successfully"
 
-  # # ============================================================
-  # # STAGE 3: Deploy to Green Slot
-  # # ============================================================
-  # deploy-to-green:
-  #   name: 'Stage 3: Deploy to Green Slot'
-  #   runs-on: ubuntu-latest
-  #   needs: provision-infra
-  #   environment: 
-  #     name: dev-green
-  #     url: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net
+  # ============================================================
+  # STAGE 3: Deploy to Green Slot
+  # ============================================================
+  deploy-to-green:
+    name: 'Stage 3: Deploy to Green Slot'
+    runs-on: ubuntu-latest
+    needs: provision-infra
+    environment: 
+      name: dev-green
+      url: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net
     
-  #   steps:
-  #     - name: Download artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: dotnet-app
-  #         path: ./publish
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dotnet-app
+          path: ./publish
 
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Deploy to Green Slot
-  #       uses: azure/webapps-deploy@v2
-  #       with:
-  #         app-name: ${{ needs.provision-infra.outputs.app_service_name }}
-  #         slot-name: 'green'
-  #         package: ./publish
+      - name: Deploy to Green Slot
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ needs.provision-infra.outputs.app_service_name }}
+          slot-name: 'green'
+          package: ./publish
 
-  #     - name: Wait for Green Slot to warm up
-  #       run: sleep 30
+      - name: Wait for Green Slot to warm up
+        run: sleep 30
 
-  #     - name: '✅ Stage 3 Complete'
-  #       run: |
-  #         echo "Application deployed to green slot"
-  #         echo "Green URL: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net"
+      - name: '✅ Stage 3 Complete'
+        run: |
+          echo "Application deployed to green slot"
+          echo "Green URL: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net"
 
   # # ============================================================
   # # STAGE 4: Regression Tests on Green
