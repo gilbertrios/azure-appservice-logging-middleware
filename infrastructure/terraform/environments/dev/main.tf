@@ -15,14 +15,6 @@ terraform {
     key                  = "middleware/environments/dev/terraform.tfstate"
   }
 
-
-  # Uncomment after creating storage account for state
-  # backend "azurerm" {
-  #   resource_group_name  = "rg-terraform-state"
-  #   storage_account_name = "stterraformstate"
-  #   container_name       = "tfstate"
-  #   key                  = "dev.terraform.tfstate"
-  # }
 }
 
 provider "azurerm" {
