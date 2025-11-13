@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.13.5"
-  
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -8,7 +8,13 @@ terraform {
     }
   }
 
-  
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate-shared-infra"
+    storage_account_name = "statesharedinfrajyzjo0l2"
+    container_name       = "tfstate"
+    key                  = "middleware/environments/dev/terraform.tfstate"
+  }
+
 
   # Uncomment after creating storage account for state
   # backend "azurerm" {
@@ -25,10 +31,10 @@ provider "azurerm" {
 
 # Local variables
 locals {
-  environment         = "dev"
-  location           = var.location
+  environment          = "dev"
+  location             = var.location
   resource_name_prefix = "logmw-${local.environment}"
-  
+
   common_tags = {
     Environment = local.environment
     Project     = "Azure Logging Middleware"
@@ -50,7 +56,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30  # Saves ~50% vs 30 days
+  retention_in_days   = 30 # Saves ~50% vs 30 days
   tags                = local.common_tags
 }
 
@@ -71,23 +77,23 @@ module "app_service" {
   name                = "app-${local.resource_name_prefix}"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
-  
+
   # App Service Plan configuration
   sku_name = var.app_service_sku
-  
+
   # Application settings
   app_settings = {
-    "ASPNETCORE_ENVIRONMENT"                    = "Development"
-    "ApplicationInsights__ConnectionString"     = azurerm_application_insights.main.connection_string
-    "ObfuscationMiddleware__Enabled"            = "true"
-    "ObfuscationMiddleware__ObfuscationMask"   = "***REDACTED***"
+    "ASPNETCORE_ENVIRONMENT"                 = "Development"
+    "ApplicationInsights__ConnectionString"  = azurerm_application_insights.main.connection_string
+    "ObfuscationMiddleware__Enabled"         = "true"
+    "ObfuscationMiddleware__ObfuscationMask" = "***REDACTED***"
   }
-  
+
   # Enable deployment slots
   enable_green_slot = true
-  
+
   # Networking (optional - can add VNet integration later)
   # vnet_integration_enabled = false
-  
+
   tags = local.common_tags
 }

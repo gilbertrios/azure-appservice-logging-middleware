@@ -2,17 +2,23 @@ name: Deploy to Azure App Service (Blue-Green)
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
+    branches: [main]
+    paths: ['app/**', 'infrastructure/**', '.github/workflows/**']
+  # workflow_dispatch:
+  #   inputs:
+  #     environment:
+  #       description: 'Environment to deploy'
+  #       required: true
+  #       default: 'dev'
+  #       type: choice
+  #       options:
+  #         - dev
+
+permissions:
+  contents: read        # Read repository content
+  pull-requests: write  # Comment on PRs
+  issues: write         # Comment on issues (PRs are issues)    
+
 
 env:
   DOTNET_VERSION: '9.0.x'
