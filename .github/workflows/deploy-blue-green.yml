@@ -124,7 +124,7 @@ jobs:
       - name: '✅ Stage 3 Complete'
         run: |
           echo "Application deployed to green slot"
-          echo "Green URL: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net"
+          echo "Green URL: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net/health"
 
   # # ============================================================
   # # STAGE 4: Regression Tests on Green
