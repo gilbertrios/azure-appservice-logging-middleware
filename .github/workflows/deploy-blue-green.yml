@@ -4,16 +4,11 @@ on:
   push:
     branches: [main]
     paths: ['app/**', 'infrastructure/**', '.github/workflows/**']
-  # workflow_dispatch:
-  #   inputs:
-  #     environment:
-  #       description: 'Environment to deploy'
-  #       required: true
-  #       default: 'dev'
-  #       type: choice
-  #       options:
-  #         - dev
 
+
+permissions:
+  contents: read        # Read repository content
+  checks: write         # Publish test results
 
 env:
   TERRAFORM_VERSION: '1.13.5'

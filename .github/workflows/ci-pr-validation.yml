@@ -12,7 +12,8 @@ on:
 permissions:
   contents: read        # Read repository content
   pull-requests: write  # Comment on PRs
-  issues: write         # Comment on issues (PRs are issues)    
+  issues: write         # Comment on issues (PRs are issues)
+  checks: write         # Publish test results    
 
 env:
   TERRAFORM_VERSION: '1.13.5'

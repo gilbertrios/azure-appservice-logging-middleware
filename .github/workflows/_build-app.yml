@@ -36,10 +36,19 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Run unit tests
-        run: dotnet test --filter "Category=Unit" --configuration Release --no-build --verbosity normal
+        run: dotnet test --filter "Category=Unit" --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=unit-tests.trx" --results-directory ./test-results
 
       - name: Run integration tests
-        run: dotnet test --filter "Category=Integration" --configuration Release --no-build --verbosity normal
+        run: dotnet test --filter "Category=Integration" --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=integration-tests.trx" --results-directory ./test-results
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: ./test-results/*.trx
+          reporter: dotnet-trx
+          fail-on-error: true
 
       - name: Publish application
         working-directory: ./app
