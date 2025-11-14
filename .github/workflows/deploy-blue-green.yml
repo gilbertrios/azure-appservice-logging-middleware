@@ -265,19 +265,105 @@ jobs:
         run: echo "Successfully swapped to production"
 
   # ============================================================
-  # STAGE 6: Manual Rollback (Requires manual approval)
+  # STAGE 6: Smoke Tests on Production
   # ============================================================
-  rollback:
-    name: 'Stage 6: Manual Rollback'
+  smoke-tests-production:
+    name: 'Stage 6: Smoke Tests on Production'
     runs-on: ubuntu-latest
     needs: 
       - provision-infra
-      - deploy-to-green
-      - regression-tests
       - swap-to-blue
-    if: success()
-    environment: 
-      name: dev-rollback
+    
+    steps:
+      - name: Checkout code (for test scripts)
+        uses: actions/checkout@v4
+
+      - name: Set Production URL
+        id: urls
+        run: |
+          PROD_URL="https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net"
+          echo "prod_url=$PROD_URL" >> $GITHUB_OUTPUT
+          echo "Testing Production: $PROD_URL"
+
+      - name: Production Health Check
+        run: |
+          PROD_URL="${{ steps.urls.outputs.prod_url }}"
+          
+          echo "Running production health check..."
+          for i in {1..5}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed (attempt $i)"
+              break
+            fi
+            echo "⏳ Health check attempt $i failed (HTTP $HTTP_CODE), retrying..."
+            sleep 10
+          done
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Production health check failed after 5 attempts"
+            exit 1
+          fi
+
+      - name: Production API Endpoint Tests
+        run: |
+          PROD_URL="${{ steps.urls.outputs.prod_url }}"
+          
+          echo "Testing /api/orders endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/api/orders || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Orders endpoint test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Orders endpoint test passed"
+          
+          echo "Testing /api/payments endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/api/payments || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Payments endpoint test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Payments endpoint test passed"
+
+      - name: Production Response Time Check
+        run: |
+          PROD_URL="${{ steps.urls.outputs.prod_url }}"
+          
+          echo "Checking production response time..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' $PROD_URL/health)
+          echo "Response time: ${RESPONSE_TIME}s"
+          
+          # Fail if response time > 5 seconds (more lenient than green slot)
+          if (( $(echo "$RESPONSE_TIME > 5.0" | bc -l) )); then
+            echo "❌ Response time too slow: ${RESPONSE_TIME}s"
+            exit 1
+          fi
+          echo "✅ Response time acceptable"
+
+      - name: Production Smoke Tests Summary
+        run: |
+          echo "================================"
+          echo "🚀 Production Smoke Tests Passed"
+          echo "================================"
+          echo "✅ Health check"
+          echo "✅ API endpoints"
+          echo "✅ Response time"
+          echo "================================"
+
+      - name: '✅ Stage 6 Complete'
+        run: echo "Production smoke tests passed"
+
+  # ============================================================
+  # STAGE 7: Auto Rollback (Only if production smoke tests fail)
+  # ============================================================
+  rollback:
+    name: 'Stage 7: Auto Rollback'
+    runs-on: ubuntu-latest
+    needs: 
+      - provision-infra
+      - smoke-tests-production
+    if: failure()
+    environment: dev-rollback
     
     steps:
       - name: Azure Login
@@ -287,7 +373,7 @@ jobs:
 
       - name: Rollback - Swap back to previous version
         run: |
-          echo "⚠️ Manual rollback initiated..."
+          echo "⚠️ Production smoke tests failed - Initiating automatic rollback..."
           az webapp deployment slot swap \
             --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
             --name ${{ needs.provision-infra.outputs.app_service_name }} \
@@ -311,13 +397,14 @@ jobs:
           
           echo "✅ Rollback successful - previous version restored"
 
-      - name: '🔴 Stage 6 Complete (Rollback)'
+      - name: '🔴 Stage 7 Complete (Rollback)'
         run: |
           echo "================================"
-          echo "⚠️  MANUAL ROLLBACK EXECUTED"
+          echo "⚠️  AUTO ROLLBACK EXECUTED"
           echo "================================"
-          echo "Previous version has been restored"
-          echo "Review the green slot to identify issues"
+          echo "Production smoke tests failed - previous version restored"
+          echo "Review smoke-tests-production stage logs to identify the failure"
+          echo "Green slot contains the deployment that failed smoke tests"
 
   # ============================================================
   # Success Notification
@@ -325,7 +412,7 @@ jobs:
   notify-success:
     name: 'Notify Success'
     runs-on: ubuntu-latest
-    needs: swap-to-blue
+    needs: smoke-tests-production
     if: success()
     
     steps:
@@ -334,10 +421,11 @@ jobs:
           echo "================================"
           echo "🎉 DEPLOYMENT SUCCESSFUL"
           echo "================================"
-          echo "All 5 stages completed:"
+          echo "All 6 stages completed:"
           echo "✅ 1. Build Application"
           echo "✅ 2. Provision Infrastructure"
           echo "✅ 3. Deploy to Green Slot"
-          echo "✅ 4. Regression Tests"
+          echo "✅ 4. Regression Tests on Green"
           echo "✅ 5. Swap to Production"
+          echo "✅ 6. Smoke Tests on Production"
           echo "================================"
