@@ -264,79 +264,79 @@ jobs:
       - name: '✅ Stage 5 Complete'
         run: echo "Successfully swapped to production"
 
-  # # ============================================================
-  # # STAGE 6: Rollback (Only runs if previous stages fail)
-  # # ============================================================
-  # rollback:
-  #   name: 'Stage 6: Rollback'
-  #   runs-on: ubuntu-latest
-  #   needs: 
-  #     - provision-infra
-  #     - deploy-to-green
-  #     - regression-tests
-  #     - swap-to-blue
-  #   if: failure()
-  #   environment: dev-rollback
+  # ============================================================
+  # STAGE 6: Rollback (Only runs if previous stages fail)
+  # ============================================================
+  rollback:
+    name: 'Stage 6: Rollback'
+    runs-on: ubuntu-latest
+    needs: 
+      - provision-infra
+      - deploy-to-green
+      - regression-tests
+      - swap-to-blue
+    if: failure()
+    environment: dev-rollback
     
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Rollback - Swap back to previous version
-  #       run: |
-  #         echo "⚠️ Deployment or tests failed. Initiating rollback..."
-  #         az webapp deployment slot swap \
-  #           --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
-  #           --name ${{ needs.provision-infra.outputs.app_service_name }} \
-  #           --slot green \
-  #           --target-slot production
+      - name: Rollback - Swap back to previous version
+        run: |
+          echo "⚠️ Deployment or tests failed. Initiating rollback..."
+          az webapp deployment slot swap \
+            --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
+            --name ${{ needs.provision-infra.outputs.app_service_name }} \
+            --slot green \
+            --target-slot production
 
-  #     - name: Wait for rollback to complete
-  #       run: sleep 15
+      - name: Wait for rollback to complete
+        run: sleep 15
 
-  #     - name: Verify Rollback
-  #       run: |
-  #         PROD_URL="https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net"
+      - name: Verify Rollback
+        run: |
+          PROD_URL="https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net"
           
-  #         echo "Verifying rollback..."
-  #         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
+          echo "Verifying rollback..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
           
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "❌ Rollback verification failed"
-  #           exit 1
-  #         fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Rollback verification failed"
+            exit 1
+          fi
           
-  #         echo "✅ Rollback successful - previous version restored"
+          echo "✅ Rollback successful - previous version restored"
 
-  #     - name: '🔴 Stage 6 Complete (Rollback)'
-  #       run: |
-  #         echo "================================"
-  #         echo "⚠️  ROLLBACK EXECUTED"
-  #         echo "================================"
-  #         echo "Previous version has been restored"
-  #         echo "Please investigate the deployment failure"
+      - name: '🔴 Stage 6 Complete (Rollback)'
+        run: |
+          echo "================================"
+          echo "⚠️  ROLLBACK EXECUTED"
+          echo "================================"
+          echo "Previous version has been restored"
+          echo "Please investigate the deployment failure"
 
-  # # ============================================================
-  # # Success Notification
-  # # ============================================================
-  # notify-success:
-  #   name: 'Notify Success'
-  #   runs-on: ubuntu-latest
-  #   needs: swap-to-blue
-  #   if: success()
+  # ============================================================
+  # Success Notification
+  # ============================================================
+  notify-success:
+    name: 'Notify Success'
+    runs-on: ubuntu-latest
+    needs: swap-to-blue
+    if: success()
     
-  #   steps:
-  #     - name: Deployment Success
-  #       run: |
-  #         echo "================================"
-  #         echo "🎉 DEPLOYMENT SUCCESSFUL"
-  #         echo "================================"
-  #         echo "All 5 stages completed:"
-  #         echo "✅ 1. Build Application"
-  #         echo "✅ 2. Provision Infrastructure"
-  #         echo "✅ 3. Deploy to Green Slot"
-  #         echo "✅ 4. Regression Tests"
-  #         echo "✅ 5. Swap to Production"
-  #         echo "================================"
+    steps:
+      - name: Deployment Success
+        run: |
+          echo "================================"
+          echo "🎉 DEPLOYMENT SUCCESSFUL"
+          echo "================================"
+          echo "All 5 stages completed:"
+          echo "✅ 1. Build Application"
+          echo "✅ 2. Provision Infrastructure"
+          echo "✅ 3. Deploy to Green Slot"
+          echo "✅ 4. Regression Tests"
+          echo "✅ 5. Swap to Production"
+          echo "================================"
