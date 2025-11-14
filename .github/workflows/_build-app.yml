@@ -13,6 +13,11 @@ on:
         description: "Name of the build artifact"
         value: ${{ jobs.build.outputs.artifact-name }}
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     name: Build .NET Application
