@@ -1,10 +1,10 @@
 # DevOps - CI/CD Pipelines
 
-This directory contains GitHub Actions workflows and deployment scripts for continuous integration and deployment.
+**Note:** GitHub Actions workflows are located in `.github/workflows/` (GitHub's required location). This folder contains documentation and helper scripts.
 
 ## 🚀 Deployment Pipeline
 
-### 6-Stage Blue-Green Deployment
+### 7-Stage Blue-Green Deployment
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -12,7 +12,9 @@ This directory contains GitHub Actions workflows and deployment scripts for cont
 │  • Restore dependencies                                 │
 │  • Build .NET app                                       │
 │  • Run unit tests                                       │
-│  • Publish artifact                                     │
+│  • Run integration tests                                │
+│  • Publish test results                                 │
+│  • Upload artifact                                      │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
@@ -38,38 +40,50 @@ This directory contains GitHub Actions workflows and deployment scripts for cont
 │  • Health check                                         │
 │  • API endpoint tests                                   │
 │  • Response time validation                             │
-│  • Smoke tests                                          │
+│  • Comprehensive functional tests                       │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Stage 5: Swap to Production (Blue)                     │
 │  • Swap green → production                              │
-│  • Verify production health                             │
-│  • Monitor metrics                                      │
+│  • Zero-downtime deployment                             │
 └────────────────────┬────────────────────────────────────┘
                      │
-                     ▼ (Only if failures occur)
+                     ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Stage 6: Rollback (Conditional)                        │
+│  Stage 6: Smoke Tests on Production                     │
+│  • Quick health check validation                        │
+│  • Critical endpoint verification                       │
+│  • Performance baseline check                           │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼ (Only if Stage 6 fails)
+┌─────────────────────────────────────────────────────────┐
+│  Stage 7: Auto Rollback (Conditional)                   │
 │  • Swap production → green (restore previous)           │
-│  • Verify rollback                                      │
-│  • Send alerts                                          │
+│  • Verify rollback succeeded                            │
+│  • Send failure notifications                           │
 └─────────────────────────────────────────────────────────┘
 ```
+
+**Important:** Auto rollback only triggers if **production smoke tests (Stage 6) fail**. Green slot test failures (Stage 4) stop the pipeline without touching production.
 
 ## 📁 Structure
 
 ```
-.github/workflows/                 # GitHub Actions workflows
-└── deploy-blue-green.yml          # Main deployment pipeline
+.github/workflows/                 # GitHub Actions workflows (required location)
+├── deploy-blue-green.yml          # Main 7-stage deployment pipeline
+├── manual-rollback.yml            # On-demand rollback workflow
+├── ci-pr-validation.yml           # PR validation (build + tests + terraform)
+└── _build-app.yml                 # Reusable build workflow
 
 devops/
 ├── scripts/                       # Deployment helper scripts
 │   ├── swap-slots.sh              # Manual slot swap
 │   └── validate-deployment.sh     # Deployment validation
 │
-└── README.md                      # DevOps documentation
+└── README.md                      # DevOps documentation (this file)
 ```
 
 ## 🔧 Setup
@@ -151,14 +165,23 @@ Each stage will show:
 
 | Stage | Duration |
 |-------|----------|
-| 1. Build Application | ~2-3 minutes |
+| 1. Build Application (with tests) | ~3-4 minutes |
 | 2. Provision Infrastructure | ~3-5 minutes (first run), ~30s (subsequent) |
 | 3. Deploy to Green | ~1-2 minutes |
-| 4. Regression Tests | ~30 seconds |
+| 4. Regression Tests (comprehensive) | ~1-2 minutes |
 | 5. Swap to Production | ~20 seconds |
-| 6. Rollback (if needed) | ~30 seconds |
+| 6. Smoke Tests (quick validation) | ~30 seconds |
+| 7. Auto Rollback (if triggered) | ~30 seconds |
 
-**Total:** ~7-11 minutes for full deployment
+**Total:** ~9-14 minutes for full deployment with tests
+
+### Test Results
+
+Test results are automatically published to GitHub Actions:
+- ✅ **Tests tab** - Detailed results for each test
+- ✅ **Annotations** - Failures shown on workflow summary
+- ✅ **PR comments** - Test results on pull requests
+- ✅ **TRX reports** - Full .NET test report format
 
 ## 🧪 Testing Locally
 
@@ -189,6 +212,24 @@ terraform plan
 ```
 
 ## 🔄 Manual Operations
+
+### Manual Rollback Workflow
+
+For post-deployment issues not caught by automated tests:
+
+1. Go to **GitHub Actions** → **Manual Rollback**
+2. Click **Run workflow**
+3. Select environment: `dev`
+4. Type confirmation: `ROLLBACK`
+5. Review current state validation
+6. Approve deployment (if environment protection enabled)
+7. Rollback executes
+
+**Use cases:**
+- Issues discovered after successful deployment
+- Performance degradation in production
+- Business decision to revert changes
+- Bug found by end users
 
 ### Swap Slots Manually
 
@@ -237,18 +278,23 @@ For `dev-production`:
 
 ### Stage 4: Regression Tests
 
-Tests must pass:
+Tests must pass on green slot:
 - ✅ Health check returns HTTP 200
 - ✅ `/api/orders` returns HTTP 200
 - ✅ `/api/payments` returns HTTP 200
 - ✅ Response time < 3 seconds
+- ✅ All functional tests pass
 
-If any test fails → Pipeline stops, Stage 6 (Rollback) triggers
+If any test fails → **Pipeline stops, production untouched**
 
-### Stage 5: Production Verification
+### Stage 6: Production Smoke Tests
 
+Quick validation after swap to production:
 - ✅ Production health check returns HTTP 200
-- ✅ No immediate errors in Application Insights
+- ✅ Critical endpoints accessible
+- ✅ No immediate errors in logs
+
+If smoke tests fail → **Stage 7 auto rollback triggers**
 
 ## 🚨 Troubleshooting
 
@@ -296,17 +342,22 @@ az webapp log show --name app-logmw-dev --slot green --resource-group rg-logmw-d
 ## 📝 Best Practices
 
 ✅ **Always test in green slot first**  
+✅ **Run comprehensive tests before swap**  
 ✅ **Monitor Application Insights after swap**  
 ✅ **Keep rollback capability ready**  
 ✅ **Use environment protection rules for production**  
 ✅ **Tag all deployments with version/commit SHA**  
 ✅ **Set up alerting for deployment failures**  
+✅ **Review test results in GitHub Actions UI**  
+✅ **Only auto rollback on production failures (not green slot)**
 
 ## 🔗 Next Steps
 
 1. ✅ Infrastructure deployed via Terraform
 2. ✅ Application deployed to green slot
-3. ⬜ Add integration tests
-4. ⬜ Add performance tests
-5. ⬜ Set up staging environment
-6. ⬜ Set up production environment
+3. ✅ Unit tests implemented
+4. ✅ Integration tests implemented
+5. ✅ Test results published to GitHub
+6. ⬜ Add performance tests
+7. ⬜ Set up staging environment
+8. ⬜ Set up production environment

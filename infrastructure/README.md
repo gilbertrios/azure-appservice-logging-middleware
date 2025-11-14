@@ -8,12 +8,12 @@ This directory contains all Infrastructure as Code (IaC) for provisioning Azure 
 
 ```
 Resource Group: rg-logmw-dev
-├── App Service Plan: asp-logmw-dev (Linux, B1)
+├── App Service Plan: asp-logmw-dev (Linux, S1)  # S1 required for deployment slots
 ├── App Service: app-logmw-dev
 │   ├── Production Slot (default)
 │   └── Green Slot (for blue-green deployments)
 ├── Application Insights: appi-logmw-dev
-└── Log Analytics Workspace: log-logmw-dev
+└── Log Analytics Workspace: log-logmw-dev (7-day retention)
 ```
 
 ## 📁 Structure
@@ -75,17 +75,19 @@ terraform output
 
 ```hcl
 location         = "eastus"
-app_service_sku = "B1"  # Basic tier for dev
+app_service_sku = "S1"  # Standard tier (required for deployment slots)
 ```
 
 ### Available SKUs
 
-| SKU | Description | Use Case |
-|-----|-------------|----------|
-| B1 | Basic - 1 core, 1.75 GB RAM | Development |
-| S1 | Standard - 1 core, 1.75 GB RAM | Staging |
-| P1v2 | Premium - 1 core, 3.5 GB RAM | Production |
-| P2v2 | Premium - 2 cores, 7 GB RAM | Production (high traffic) |
+| SKU | Description | Deployment Slots | Use Case |
+|-----|-------------|------------------|----------|
+| B1 | Basic - 1 core, 1.75 GB RAM | ❌ No | Simple dev (no slots) |
+| S1 | Standard - 1 core, 1.75 GB RAM | ✅ Yes | Dev/Staging with slots |
+| P1v2 | Premium - 1 core, 3.5 GB RAM | ✅ Yes | Production |
+| P2v2 | Premium - 2 cores, 7 GB RAM | ✅ Yes | Production (high traffic) |
+
+**Note:** Deployment slots require Standard (S1) tier or higher.
 
 ## 📊 Outputs
 
@@ -127,21 +129,41 @@ az webapp deployment slot swap \
 
 ## 🔐 State Management
 
-### Local State (Current)
+### Remote State (Azure Storage Backend)
 
-Terraform state is stored locally. For production use, configure remote state:
-
-### Remote State (Recommended)
+Terraform state is stored in Azure Storage for team collaboration and CI/CD:
 
 ```hcl
 terraform {
   backend "azurerm" {
-    resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstate"
+    resource_group_name  = "rg-tfstate-shared-infra"
+    storage_account_name = "statesharedinfrajyzjo0l2"
     container_name       = "tfstate"
-    key                  = "dev.terraform.tfstate"
+    key                  = "middleware/environments/dev/terraform.tfstate"
   }
 }
+```
+
+**Benefits:**
+- ✅ Team collaboration (shared state)
+- ✅ State locking (prevents conflicts)
+- ✅ Encrypted at rest
+- ✅ Works with CI/CD pipelines
+
+### State Management Commands
+
+```bash
+# View current state
+terraform show
+
+# List resources in state
+terraform state list
+
+# Remove resource from state (use with caution)
+terraform state rm <resource>
+
+# Pull remote state
+terraform state pull
 ```
 
 ## 🧪 Validation

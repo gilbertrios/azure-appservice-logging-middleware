@@ -3,8 +3,8 @@
 ## Quick Start
 
 ```bash
-# Navigate to the src directory
-cd /Users/gilbertrios/repos/azure-appservice-logging-middleware/src
+# Navigate to the app directory
+cd azure-appservice-logging-middleware/app
 
 # Restore packages
 dotnet restore
@@ -18,10 +18,14 @@ The API will start at:
 - HTTP: `http://localhost:5000`
 - Swagger UI: `https://localhost:5001/swagger`
 
+## Running with VS Code Debugger
+
+Press **F5** or use the **Run and Debug** view. The launch configuration is already set up in `.vscode/launch.json`.
+
 ## Project Structure
 
 ```
-/src
+/app
   /Infrastructure
     - IModule.cs              # Module interface
     - ModuleExtensions.cs     # Auto-discovery extensions
@@ -42,8 +46,11 @@ The API will start at:
       - IPaymentService.cs    # Payment service interface
       /Models
         - PaymentDto.cs       # Payment DTOs and enums
+  /Properties
+    - launchSettings.json     # Development launch settings
   - Program.cs                # Application entry point with middleware configured
   - appsettings.json          # Configuration including obfuscation settings
+  - appsettings.Development.json  # Development-specific settings
   - AzureAppServiceLoggingMiddleware.csproj
 ```
 
@@ -272,3 +279,36 @@ Each module (Orders, Payments) is:
 - **Testable** - Can be tested independently
 - **Discoverable** - Auto-registered via reflection
 - **Extractable** - Clear boundary for microservice split
+
+## 🧪 Testing
+
+### Run Tests
+
+```bash
+# Navigate to repository root
+cd azure-appservice-logging-middleware
+
+# Run all tests
+dotnet test
+
+# Run only unit tests (fast)
+dotnet test --filter "Category=Unit"
+
+# Run only integration tests
+dotnet test --filter "Category=Integration"
+```
+
+### Test Projects
+
+**Unit Tests** - `tests/AzureAppServiceLoggingMiddleware.UnitTests/`
+- Tests middleware logic in isolation
+- Mock dependencies (ILogger, HttpContext)
+- Fast execution (~100ms for all tests)
+
+**Integration Tests** - `tests/AzureAppServiceLoggingMiddleware.IntegrationTests/`
+- End-to-end API testing
+- Uses WebApplicationFactory
+- Tests full middleware pipeline
+- Slower execution (~500ms for all tests)
+
+See [Testing Documentation](../README.md#-testing) for more details.
