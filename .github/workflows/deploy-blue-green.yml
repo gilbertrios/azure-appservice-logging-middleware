@@ -265,18 +265,19 @@ jobs:
         run: echo "Successfully swapped to production"
 
   # ============================================================
-  # STAGE 6: Rollback (Only runs if previous stages fail)
+  # STAGE 6: Manual Rollback (Requires manual approval)
   # ============================================================
   rollback:
-    name: 'Stage 6: Rollback'
+    name: 'Stage 6: Manual Rollback'
     runs-on: ubuntu-latest
     needs: 
       - provision-infra
       - deploy-to-green
       - regression-tests
       - swap-to-blue
-    if: failure()
-    environment: dev-rollback
+    if: success()
+    environment: 
+      name: dev-rollback
     
     steps:
       - name: Azure Login
@@ -286,7 +287,7 @@ jobs:
 
       - name: Rollback - Swap back to previous version
         run: |
-          echo "⚠️ Deployment or tests failed. Initiating rollback..."
+          echo "⚠️ Manual rollback initiated..."
           az webapp deployment slot swap \
             --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
             --name ${{ needs.provision-infra.outputs.app_service_name }} \
@@ -313,10 +314,10 @@ jobs:
       - name: '🔴 Stage 6 Complete (Rollback)'
         run: |
           echo "================================"
-          echo "⚠️  ROLLBACK EXECUTED"
+          echo "⚠️  MANUAL ROLLBACK EXECUTED"
           echo "================================"
           echo "Previous version has been restored"
-          echo "Please investigate the deployment failure"
+          echo "Review the green slot to identify issues"
 
   # ============================================================
   # Success Notification
