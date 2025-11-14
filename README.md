@@ -97,7 +97,15 @@ azure-appservice-logging-middleware/
 │   ├── Infrastructure/               # Module pattern implementation
 │   ├── Middleware/                   # Obfuscation middleware
 │   ├── Modules/                      # Orders & Payments modules
+│   ├── Properties/                   # launchSettings.json
 │   └── Program.cs
+│
+├── tests/                            # Test Projects
+│   ├── AzureAppServiceLoggingMiddleware.UnitTests/
+│   │   └── Middleware/
+│   │       └── ObfuscationMiddlewareTests.cs
+│   └── AzureAppServiceLoggingMiddleware.IntegrationTests/
+│       └── ObfuscationMiddlewareIntegrationTests.cs
 │
 ├── infrastructure/                   # Terraform IaC
 │   ├── terraform/
@@ -229,6 +237,46 @@ The middleware automatically logs obfuscated request/response data to Applicatio
 Application Insights connection is configured automatically via Terraform during deployment.
 
 ## 🧪 Testing
+
+### Run All Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run only unit tests (fast)
+dotnet test --filter "Category=Unit"
+
+# Run only integration tests
+dotnet test --filter "Category=Integration"
+
+# Run with detailed output
+dotnet test --verbosity normal
+```
+
+### Test Projects
+
+**Unit Tests** (`tests/AzureAppServiceLoggingMiddleware.UnitTests/`)
+- ObfuscationMiddleware logic testing
+- Mock dependencies (ILogger, HttpContext)
+- Edge cases (null bodies, invalid JSON, nested objects)
+- Sensitive property detection
+- Fast execution (~100ms)
+
+**Integration Tests** (`tests/AzureAppServiceLoggingMiddleware.IntegrationTests/`)
+- End-to-end API testing with WebApplicationFactory
+- Real HTTP requests through middleware pipeline
+- Module endpoint validation (Orders, Payments)
+- Health check verification
+- Slower execution (~500ms)
+
+### Test Results
+
+Test results are automatically published to GitHub Actions:
+- ✅ Summary in workflow logs
+- ✅ Detailed results in "Tests" tab
+- ✅ Failure annotations on PRs
+- ✅ TRX format reports
 
 ### With cURL
 ```bash
