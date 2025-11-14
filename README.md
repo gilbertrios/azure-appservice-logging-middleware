@@ -16,6 +16,7 @@ A production-ready ASP.NET Core minimal API showcasing **automatic sensitive dat
 - **📝 Auto-Discovery** - Modules automatically registered via reflection
 - **🔧 Configurable** - Control obfuscation patterns via `appsettings.json`
 - **📚 OpenAPI/Swagger** - Full API documentation out of the box
+- **🚀 Production-Ready** - Includes health checks, structured logging, and comprehensive testing
 
 ## 🚀 Quick Start
 
@@ -37,17 +38,18 @@ The API will be available at:
 ### Deploy to Azure
 
 ```bash
-# 1. Configure Azure credentials (see devops/README.md)
+# 1. Configure Azure credentials (see docs/setup-guide.md)
 # 2. Push to main branch
 git push origin main
 
-# The 6-stage pipeline will:
+# The 7-stage pipeline will:
 # ✅ Build application
 # ✅ Provision infrastructure (Terraform)
 # ✅ Deploy to green slot
-# ✅ Run regression tests
+# ✅ Run regression tests on green
 # ✅ Swap to production
-# ✅ Rollback if needed
+# ✅ Run smoke tests on production
+# ✅ Auto rollback if smoke tests fail
 ```
 
 ## 🔒 Obfuscation Middleware in Action
@@ -86,7 +88,10 @@ curl -X POST http://localhost:5000/api/payments/process \
 azure-appservice-logging-middleware/
 ├── .github/
 │   └── workflows/
-│       └── deploy-blue-green.yml     # 6-stage deployment pipeline
+│       ├── deploy-blue-green.yml     # 7-stage deployment pipeline (auto rollback)
+│       ├── manual-rollback.yml       # On-demand rollback workflow
+│       ├── ci-pr-validation.yml      # PR validation (build + terraform)
+│       └── _build-app.yml            # Reusable build workflow
 │
 ├── app/                              # .NET 9.0 Application
 │   ├── Infrastructure/               # Module pattern implementation
@@ -100,9 +105,6 @@ azure-appservice-logging-middleware/
 │   │   │   └── dev/                  # Dev environment config
 │   │   └── modules/
 │   │       └── app-service/          # App Service with slots
-│   └── scripts/
-│
-├── devops/                          # CI/CD Scripts & Docs
 │   └── scripts/
 │
 └── docs/                            # Documentation
@@ -187,12 +189,12 @@ Edit `appsettings.json` to customize obfuscation behavior:
 
 ```
 Resource Group: rg-logmw-dev
-├── App Service Plan (Linux, B1)
+├── App Service Plan (Linux, S1)  # S1 required for deployment slots
 ├── App Service
 │   ├── Production Slot (blue)
 │   └── Green Slot (staging)
 ├── Application Insights
-└── Log Analytics Workspace
+└── Log Analytics Workspace (7-day retention)
 ```
 
 ### Blue-Green Deployment Slots
@@ -266,7 +268,7 @@ curl -X POST http://localhost:5000/api/payments/process \
 
 ### Infrastructure & DevOps
 - [Infrastructure Guide](infrastructure/README.md) - Terraform and Azure resources
-- [DevOps Pipeline Guide](devops/README.md) - CI/CD setup and deployment
+- [Setup Guide](docs/setup-guide.md) - Deploy to Azure step-by-step
 - [App Service vs Functions](docs/app-service-vs-functions.md) - Service comparison
 - [Pipeline Comparison](docs/pipeline-comparison.md) - CI/CD strategies
 
@@ -275,7 +277,7 @@ curl -X POST http://localhost:5000/api/payments/process \
 
 ## 🚀 CI/CD Pipeline
 
-### 6-Stage Blue-Green Deployment
+### 7-Stage Blue-Green Deployment (Automatic)
 
 ```
 Stage 1: Build Application
@@ -284,16 +286,52 @@ Stage 2: Provision Infrastructure (Terraform)
    ↓
 Stage 3: Deploy to Green Slot
    ↓
-Stage 4: Regression Tests on Green
+Stage 4: Regression Tests on Green (comprehensive)
    ↓
 Stage 5: Swap Green to Production
    ↓
-Stage 6: Rollback (if failures occur)
+Stage 6: Smoke Tests on Production (quick validation)
+   ↓
+Stage 7: Auto Rollback (if smoke tests fail)
 ```
+
+**Triggers:** Push to `main` branch with changes to `app/**`, `infrastructure/**`, or `.github/workflows/**`
+
+### Manual Rollback Workflow
+
+On-demand rollback for post-deployment issues:
+
+1. Go to **Actions** → **Manual Rollback**
+2. Click **Run workflow**
+3. Select environment: `dev`
+4. Type confirmation: `ROLLBACK`
+5. Review current state
+6. Approve deployment (if environment protection enabled)
+7. Rollback executes
+
+**Use cases:**
+- Issues discovered after successful deployment
+- Performance degradation in production
+- Business decision to revert changes
+- Bug found by users (not caught in automated tests)
+
+### Rollback Strategy
+
+**Auto Rollback (Stage 7):**
+- ✅ Triggers when production smoke tests fail
+- ✅ Restores previous version automatically
+- ✅ Verifies rollback succeeded
+- ❌ Does NOT trigger for green slot test failures (production safe)
+
+**Manual Rollback (Separate Workflow):**
+- ✅ Full control over timing
+- ✅ Validates current state before rollback
+- ✅ Requires explicit confirmation
+- ✅ Optional approval gate
 
 ### Automatic Deployment
 
-Push to `main` branch triggers the pipeline:
+Push to `main` branch triggers the deployment pipeline:
 
 ```bash
 git add .
@@ -301,14 +339,28 @@ git commit -m "feat: new feature"
 git push origin main
 ```
 
-### Manual Deployment
+**Pipeline behavior:**
+- Runs all 7 stages automatically
+- Auto rollback only if production smoke tests fail
+- Green slot test failures stop pipeline (production untouched)
 
-Via GitHub Actions UI:
-1. Go to **Actions** tab
-2. Select **Deploy to Azure App Service**
-3. Click **Run workflow**
+### Pull Request Validation
 
-See [DevOps README](devops/README.md) for setup and configuration.
+Create PR to `main` triggers CI validation:
+
+```bash
+git checkout -b feature/new-feature
+git add .
+git commit -m "feat: add new feature"
+git push origin feature/new-feature
+# Create PR on GitHub
+```
+
+**CI Pipeline runs:**
+- ✅ Build and test application
+- ✅ Validate Terraform formatting
+- ✅ Terraform plan (preview infrastructure changes)
+- ✅ Comment PR with Terraform plan output
 
 ## 🔄 Migration Path
 
@@ -362,10 +414,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - ✅ Infrastructure versioning and state management
 
 ### DevOps & CI/CD
-- ✅ 6-stage automated deployment pipeline
-- ✅ Blue-green deployment pattern
-- ✅ Automated testing and validation
-- ✅ Rollback capabilities
+- ✅ 7-stage automated deployment pipeline
+- ✅ Blue-green deployment with dual rollback strategies
+- ✅ Automated testing (regression + smoke tests)
+- ✅ PR validation with Terraform plan preview
+- ✅ Reusable workflows for code reuse
+- ✅ Auto rollback on production failures
+- ✅ Manual rollback for on-demand recovery
 
 ### Development Best Practices
 - ✅ Modular architecture (Orders, Payments modules)
