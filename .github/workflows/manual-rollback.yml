@@ -1,0 +1,237 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+      confirm:
+        description: 'Type "ROLLBACK" to confirm'
+        required: true
+        type: string
+
+env:
+  TERRAFORM_VERSION: '1.13.5'
+
+jobs:
+  # ============================================================
+  # Validate Confirmation
+  # ============================================================
+  validate:
+    name: Validate Rollback Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "ROLLBACK" ]; then
+            echo "❌ Rollback cancelled - confirmation text did not match 'ROLLBACK'"
+            echo "You entered: '${{ inputs.confirm }}'"
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+  # ============================================================
+  # Get Infrastructure Info
+  # ============================================================
+  get-infra-info:
+    name: Get Infrastructure Information
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: ${{ inputs.environment }}
+    outputs:
+      app_service_name: ${{ steps.terraform-output.outputs.app_service_name }}
+      resource_group_name: ${{ steps.terraform-output.outputs.resource_group_name }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set Azure Environment Variables for Terraform
+        run: |
+          echo "ARM_SUBSCRIPTION_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.subscriptionId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientId')" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.clientSecret')" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo '${{ secrets.AZURE_CREDENTIALS }}' | jq -r '.tenantId')" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: ./infrastructure/terraform/environments/${{ inputs.environment }}
+        run: terraform init
+
+      - name: Get Terraform Outputs
+        id: terraform-output
+        working-directory: ./infrastructure/terraform/environments/${{ inputs.environment }}
+        run: |
+          APP_NAME=$(terraform output -raw app_service_name)
+          RG_NAME=$(terraform output -raw resource_group_name)
+          echo "app_service_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "resource_group_name=$RG_NAME" >> $GITHUB_OUTPUT
+          echo "📋 App Service: $APP_NAME"
+          echo "📋 Resource Group: $RG_NAME"
+
+  # ============================================================
+  # Check Current State
+  # ============================================================
+  check-state:
+    name: Check Current Production State
+    runs-on: ubuntu-latest
+    needs: get-infra-info
+    
+    steps:
+      - name: Check Production and Green Slot Health
+        run: |
+          PROD_URL="https://${{ needs.get-infra-info.outputs.app_service_name }}.azurewebsites.net"
+          GREEN_URL="https://${{ needs.get-infra-info.outputs.app_service_name }}-green.azurewebsites.net"
+          
+          echo "================================"
+          echo "📊 Current State Check"
+          echo "================================"
+          
+          echo ""
+          echo "🔵 Production (Blue) Slot:"
+          echo "URL: $PROD_URL"
+          PROD_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
+          echo "Status: HTTP $PROD_CODE"
+          
+          if [ "$PROD_CODE" = "200" ]; then
+            echo "✅ Production is healthy"
+          else
+            echo "⚠️  Production is unhealthy"
+          fi
+          
+          echo ""
+          echo "🟢 Green Slot:"
+          echo "URL: $GREEN_URL"
+          GREEN_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/health || echo "000")
+          echo "Status: HTTP $GREEN_CODE"
+          
+          if [ "$GREEN_CODE" = "200" ]; then
+            echo "✅ Green slot is healthy"
+          else
+            echo "⚠️  Green slot is unhealthy"
+          fi
+          
+          echo ""
+          echo "================================"
+          echo "ℹ️  Rollback will swap these slots"
+          echo "   Green → Production"
+          echo "================================"
+
+  # ============================================================
+  # Execute Rollback
+  # ============================================================
+  execute-rollback:
+    name: Execute Rollback
+    runs-on: ubuntu-latest
+    needs: 
+      - get-infra-info
+      - check-state
+    environment: 
+      name: manual-rollback-${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Pre-Rollback Summary
+        run: |
+          echo "================================"
+          echo "⚠️  ROLLBACK PREPARATION"
+          echo "================================"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Resource Group: ${{ needs.get-infra-info.outputs.resource_group_name }}"
+          echo "App Service: ${{ needs.get-infra-info.outputs.app_service_name }}"
+          echo ""
+          echo "Action: Slot swap (green ↔ production)"
+          echo "Effect: Restores previous version to production"
+          echo "================================"
+
+      - name: Execute Slot Swap (Rollback)
+        run: |
+          echo "🔄 Executing slot swap..."
+          az webapp deployment slot swap \
+            --resource-group ${{ needs.get-infra-info.outputs.resource_group_name }} \
+            --name ${{ needs.get-infra-info.outputs.app_service_name }} \
+            --slot green \
+            --target-slot production
+
+      - name: Wait for swap to complete
+        run: |
+          echo "⏳ Waiting for slot swap to complete..."
+          sleep 20
+          echo "✅ Swap completed"
+
+      - name: Verify Rollback Success
+        run: |
+          PROD_URL="https://${{ needs.get-infra-info.outputs.app_service_name }}.azurewebsites.net"
+          
+          echo "🔍 Verifying rollback..."
+          for i in {1..10}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Rollback verified - Production is healthy (attempt $i)"
+              exit 0
+            fi
+            echo "⏳ Verification attempt $i: HTTP $HTTP_CODE, retrying in 10s..."
+            sleep 10
+          done
+          
+          echo "❌ Rollback verification failed after 10 attempts"
+          echo "Production URL: $PROD_URL"
+          exit 1
+
+      - name: Rollback Summary
+        if: success()
+        run: |
+          PROD_URL="https://${{ needs.get-infra-info.outputs.app_service_name }}.azurewebsites.net"
+          GREEN_URL="https://${{ needs.get-infra-info.outputs.app_service_name }}-green.azurewebsites.net"
+          
+          echo "================================"
+          echo "✅ ROLLBACK SUCCESSFUL"
+          echo "================================"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Production URL: $PROD_URL"
+          echo "Green Slot URL: $GREEN_URL"
+          echo ""
+          echo "✅ Previous version restored to production"
+          echo "✅ Production is healthy and responding"
+          echo ""
+          echo "📝 Next Steps:"
+          echo "1. Verify application functionality at: $PROD_URL"
+          echo "2. Review green slot to identify issues: $GREEN_URL"
+          echo "3. Fix issues and create new deployment"
+          echo "4. Monitor Application Insights for errors"
+          echo "================================"
+
+      - name: Rollback Failed
+        if: failure()
+        run: |
+          echo "================================"
+          echo "❌ ROLLBACK FAILED"
+          echo "================================"
+          echo "The rollback operation did not complete successfully"
+          echo ""
+          echo "🔍 Troubleshooting steps:"
+          echo "1. Check Azure Portal for slot status"
+          echo "2. Review App Service logs"
+          echo "3. Verify both slots are running"
+          echo "4. Check Application Insights"
+          echo "5. Consider manual intervention in Azure Portal"
+          echo "================================"
