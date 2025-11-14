@@ -74,3 +74,6 @@ app.MapGet("/health", () => Results.Ok(new
 .WithSummary("Check API health status");
 
 app.Run();
+
+// Make the Program class accessible to integration tests
+public partial class Program { }
