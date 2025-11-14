@@ -126,94 +126,94 @@ jobs:
           echo "Application deployed to green slot"
           echo "Green URL: https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net/health"
 
-  # # ============================================================
-  # # STAGE 4: Regression Tests on Green
-  # # ============================================================
-  # regression-tests:
-  #   name: 'Stage 4: Regression Tests on Green'
-  #   runs-on: ubuntu-latest
-  #   needs: 
-  #     - provision-infra
-  #     - deploy-to-green
+  # ============================================================
+  # STAGE 4: Regression Tests on Green
+  # ============================================================
+  regression-tests:
+    name: 'Stage 4: Regression Tests on Green'
+    runs-on: ubuntu-latest
+    needs: 
+      - provision-infra
+      - deploy-to-green
     
-  #   steps:
-  #     - name: Checkout code (for test scripts)
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code (for test scripts)
+        uses: actions/checkout@v4
 
-  #     - name: Set Green Slot URL
-  #       id: urls
-  #       run: |
-  #         GREEN_URL="https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net"
-  #         echo "green_url=$GREEN_URL" >> $GITHUB_OUTPUT
-  #         echo "Testing Green Slot: $GREEN_URL"
+      - name: Set Green Slot URL
+        id: urls
+        run: |
+          GREEN_URL="https://${{ needs.provision-infra.outputs.app_service_name }}-green.azurewebsites.net"
+          echo "green_url=$GREEN_URL" >> $GITHUB_OUTPUT
+          echo "Testing Green Slot: $GREEN_URL"
 
-  #     - name: Health Check
-  #       run: |
-  #         GREEN_URL="${{ steps.urls.outputs.green_url }}"
+      - name: Health Check
+        run: |
+          GREEN_URL="${{ steps.urls.outputs.green_url }}"
           
-  #         echo "Running health check..."
-  #         for i in {1..5}; do
-  #           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/health || echo "000")
-  #           if [ "$HTTP_CODE" = "200" ]; then
-  #             echo "✅ Health check passed (attempt $i)"
-  #             break
-  #           fi
-  #           echo "⏳ Health check attempt $i failed (HTTP $HTTP_CODE), retrying..."
-  #           sleep 10
-  #         done
+          echo "Running health check..."
+          for i in {1..5}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/health || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed (attempt $i)"
+              break
+            fi
+            echo "⏳ Health check attempt $i failed (HTTP $HTTP_CODE), retrying..."
+            sleep 10
+          done
           
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "❌ Health check failed after 5 attempts"
-  #           exit 1
-  #         fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Health check failed after 5 attempts"
+            exit 1
+          fi
 
-  #     - name: API Endpoint Tests
-  #       run: |
-  #         GREEN_URL="${{ steps.urls.outputs.green_url }}"
+      - name: API Endpoint Tests
+        run: |
+          GREEN_URL="${{ steps.urls.outputs.green_url }}"
           
-  #         echo "Testing /api/orders endpoint..."
-  #         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/api/orders || echo "000")
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "❌ Orders endpoint test failed (HTTP $HTTP_CODE)"
-  #           exit 1
-  #         fi
-  #         echo "✅ Orders endpoint test passed"
+          echo "Testing /api/orders endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/api/orders || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Orders endpoint test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Orders endpoint test passed"
           
-  #         echo "Testing /api/payments endpoint..."
-  #         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/api/payments || echo "000")
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "❌ Payments endpoint test failed (HTTP $HTTP_CODE)"
-  #           exit 1
-  #         fi
-  #         echo "✅ Payments endpoint test passed"
+          echo "Testing /api/payments endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $GREEN_URL/api/payments || echo "000")
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Payments endpoint test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          echo "✅ Payments endpoint test passed"
 
-  #     - name: Response Time Check
-  #       run: |
-  #         GREEN_URL="${{ steps.urls.outputs.green_url }}"
+      - name: Response Time Check
+        run: |
+          GREEN_URL="${{ steps.urls.outputs.green_url }}"
           
-  #         echo "Checking response time..."
-  #         RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' $GREEN_URL/health)
-  #         echo "Response time: ${RESPONSE_TIME}s"
+          echo "Checking response time..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' $GREEN_URL/health)
+          echo "Response time: ${RESPONSE_TIME}s"
           
-  #         # Fail if response time > 3 seconds
-  #         if (( $(echo "$RESPONSE_TIME > 3.0" | bc -l) )); then
-  #           echo "❌ Response time too slow: ${RESPONSE_TIME}s"
-  #           exit 1
-  #         fi
-  #         echo "✅ Response time acceptable"
+          # Fail if response time > 3 seconds
+          if (( $(echo "$RESPONSE_TIME > 3.0" | bc -l) )); then
+            echo "❌ Response time too slow: ${RESPONSE_TIME}s"
+            exit 1
+          fi
+          echo "✅ Response time acceptable"
 
-  #     - name: Smoke Tests Summary
-  #       run: |
-  #         echo "================================"
-  #         echo "🧪 All Regression Tests Passed"
-  #         echo "================================"
-  #         echo "✅ Health check"
-  #         echo "✅ API endpoints"
-  #         echo "✅ Response time"
-  #         echo "================================"
+      - name: Smoke Tests Summary
+        run: |
+          echo "================================"
+          echo "🧪 All Regression Tests Passed"
+          echo "================================"
+          echo "✅ Health check"
+          echo "✅ API endpoints"
+          echo "✅ Response time"
+          echo "================================"
 
-  #     - name: '✅ Stage 4 Complete'
-  #       run: echo "All regression tests passed on green slot"
+      - name: '✅ Stage 4 Complete'
+        run: echo "All regression tests passed on green slot"
 
   # # ============================================================
   # # STAGE 5: Swap Green to Production (Blue)
