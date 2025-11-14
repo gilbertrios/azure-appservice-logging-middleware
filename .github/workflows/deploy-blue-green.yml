@@ -215,54 +215,54 @@ jobs:
       - name: '✅ Stage 4 Complete'
         run: echo "All regression tests passed on green slot"
 
-  # # ============================================================
-  # # STAGE 5: Swap Green to Production (Blue)
-  # # ============================================================
-  # swap-to-blue:
-  #   name: 'Stage 5: Swap to Production'
-  #   runs-on: ubuntu-latest
-  #   needs: 
-  #     - provision-infra
-  #     - regression-tests
-  #   environment:
-  #     name: dev-production
-  #     url: https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net
+  # ============================================================
+  # STAGE 5: Swap Green to Production (Blue)
+  # ============================================================
+  swap-to-blue:
+    name: 'Stage 5: Swap to Production'
+    runs-on: ubuntu-latest
+    needs: 
+      - provision-infra
+      - regression-tests
+    environment:
+      name: dev-production
+      url: https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net
     
-  #   steps:
-  #     - name: Azure Login
-  #       uses: azure/login@v1
-  #       with:
-  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  #     - name: Swap Green to Production
-  #       run: |
-  #         echo "🔄 Swapping green slot to production..."
-  #         az webapp deployment slot swap \
-  #           --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
-  #           --name ${{ needs.provision-infra.outputs.app_service_name }} \
-  #           --slot green \
-  #           --target-slot production
+      - name: Swap Green to Production
+        run: |
+          echo "🔄 Swapping green slot to production..."
+          az webapp deployment slot swap \
+            --resource-group ${{ needs.provision-infra.outputs.resource_group_name }} \
+            --name ${{ needs.provision-infra.outputs.app_service_name }} \
+            --slot green \
+            --target-slot production
 
-  #     - name: Wait for swap to complete
-  #       run: sleep 20
+      - name: Wait for swap to complete
+        run: sleep 20
 
-  #     - name: Verify Production
-  #       run: |
-  #         PROD_URL="https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net"
+      - name: Verify Production
+        run: |
+          PROD_URL="https://${{ needs.provision-infra.outputs.app_service_name }}.azurewebsites.net"
           
-  #         echo "Verifying production deployment..."
-  #         HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
+          echo "Verifying production deployment..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL/health || echo "000")
           
-  #         if [ "$HTTP_CODE" != "200" ]; then
-  #           echo "❌ Production verification failed (HTTP $HTTP_CODE)"
-  #           exit 1
-  #         fi
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Production verification failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
           
-  #         echo "✅ Production is healthy"
-  #         echo "🎉 Application live at: $PROD_URL"
+          echo "✅ Production is healthy"
+          echo "🎉 Application live at: $PROD_URL"
 
-  #     - name: '✅ Stage 5 Complete'
-  #       run: echo "Successfully swapped to production"
+      - name: '✅ Stage 5 Complete'
+        run: echo "Successfully swapped to production"
 
   # # ============================================================
   # # STAGE 6: Rollback (Only runs if previous stages fail)
