@@ -133,11 +133,13 @@ az resource list \
   --output table
 
 # You should see:
-# - App Service Plan (asp-logmw-dev)
+# - App Service Plan (asp-logmw-dev) - S1 SKU (Standard tier for deployment slots)
 # - App Service (app-logmw-dev)
 # - Application Insights (appi-logmw-dev)
 # - Log Analytics Workspace (log-logmw-dev)
 ```
+
+**Note:** Standard tier (S1) or higher is required for deployment slots.
 
 ### Step 7: Verify Deployment Slots
 
@@ -172,12 +174,15 @@ git push origin main
 1. Go to **GitHub** → **Actions** tab
 2. Click on the running workflow
 3. Watch each stage:
-   - ✅ Stage 1: Build Application
+   - ✅ Stage 1: Build Application (with tests)
    - ✅ Stage 2: Provision Infrastructure
    - ✅ Stage 3: Deploy to Green Slot
-   - ✅ Stage 4: Regression Tests
+   - ✅ Stage 4: Regression Tests on Green
    - ✅ Stage 5: Swap to Production
-   - ⏭️ Stage 6: Rollback (skipped if successful)
+   - ✅ Stage 6: Smoke Tests on Production
+   - ⏭️ Stage 7: Auto Rollback (only if Stage 6 fails)
+
+**Note:** Test results are published to the "Tests" tab in GitHub Actions.
 
 ### Step 10: Verify Deployment
 
@@ -207,10 +212,33 @@ Expected output:
 ```json
 {
   "status": "Healthy",
-  "timestamp": "2025-11-12T...",
+  "timestamp": "2025-11-14T...",
   "environment": "Development"
 }
 ```
+
+### Run Tests Locally
+
+```bash
+# Navigate to repository root
+cd azure-appservice-logging-middleware
+
+# Run all tests
+dotnet test
+
+# Run only unit tests (fast)
+dotnet test --filter "Category=Unit"
+
+# Run only integration tests
+dotnet test --filter "Category=Integration"
+```
+
+### View Test Results in GitHub
+
+After pipeline runs:
+1. Go to **GitHub Actions** → Select workflow run
+2. Click **Tests** tab
+3. View detailed test results with pass/fail status
 
 ### Test API Endpoints
 
@@ -377,13 +405,16 @@ az webapp restart --name app-logmw-dev --resource-group rg-logmw-dev
 - [ ] Service principal created
 - [ ] GitHub secret configured
 - [ ] Workflow copied to `.github/workflows/`
-- [ ] Infrastructure provisioned
-- [ ] Deployment slots created
+- [ ] Infrastructure provisioned (S1 or higher for slots)
+- [ ] Deployment slots created (production + green)
 - [ ] Application deployed
+- [ ] Unit tests passing
+- [ ] Integration tests passing
 - [ ] Health endpoint returns 200
 - [ ] API endpoints working
 - [ ] Application Insights receiving data
 - [ ] Obfuscation working in logs
+- [ ] Test results visible in GitHub Actions
 
 ## 🎉 Next Steps
 

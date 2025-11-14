@@ -7,10 +7,11 @@
 This repository demonstrates:
 
 1. **Infrastructure as Code** - Terraform for Azure resource provisioning
-2. **DevOps Excellence** - 6-stage automated deployment pipeline
+2. **DevOps Excellence** - 7-stage automated deployment pipeline with dual rollback strategies
 3. **Developer Skills** - Clean architecture, modular design, modern .NET
 4. **Security Best Practices** - Automatic PII/sensitive data obfuscation
 5. **Cloud-Native Patterns** - Blue-green deployments, observability, scalability
+6. **Testing Best Practices** - Unit and integration tests with CI/CD integration
 
 ## 📊 What's Inside
 
@@ -21,6 +22,8 @@ This repository demonstrates:
 ✅ **Application Insights** - Full observability with custom telemetry  
 ✅ **OpenAPI/Swagger** - Complete API documentation  
 ✅ **Health Checks** - Kubernetes-ready health endpoints  
+✅ **Comprehensive Testing** - Unit and integration tests with 18 test cases  
+✅ **Test Result Publishing** - Automated test reports in GitHub Actions  
 
 ### Infrastructure (Terraform)
 
@@ -32,12 +35,14 @@ This repository demonstrates:
 
 ### DevOps Pipeline (GitHub Actions)
 
-✅ **Stage 1: Build** - Compile, test, publish .NET application  
+✅ **Stage 1: Build** - Compile, test (unit + integration), publish .NET application  
 ✅ **Stage 2: Provision** - Terraform infrastructure deployment  
 ✅ **Stage 3: Deploy** - Deploy to green staging slot  
-✅ **Stage 4: Test** - Automated regression and smoke tests  
+✅ **Stage 4: Test** - Automated regression tests on green slot  
 ✅ **Stage 5: Swap** - Promote to production (zero downtime)  
-✅ **Stage 6: Rollback** - Automatic rollback on failure  
+✅ **Stage 6: Smoke Test** - Quick validation on production  
+✅ **Stage 7: Auto Rollback** - Automatic rollback if smoke tests fail  
+✅ **Manual Rollback** - On-demand rollback workflow for post-deployment issues  
 
 ## 🏗️ Architecture Highlights
 
@@ -45,23 +50,28 @@ This repository demonstrates:
 
 ```
 ├── app/                    # .NET 9.0 Application
+├── tests/                  # Unit & Integration Tests
 ├── infrastructure/         # Terraform (IaC)
-├── devops/                # GitHub Actions + Scripts
-└── docs/                  # Documentation
+├── .github/workflows/      # GitHub Actions
+├── devops/                 # CI/CD Scripts & Docs
+└── docs/                   # Documentation
 ```
 
 ### Deployment Flow
 
 ```
-Code Push → Build → Provision Infra → Deploy to Green → 
-Run Tests → Swap to Blue → [Rollback if needed]
+Code Push → Build & Test → Provision Infra → Deploy to Green → 
+Regression Tests → Swap to Production → Smoke Tests → 
+[Auto Rollback if smoke tests fail]
 ```
+
+**Additional:** Manual rollback workflow available for post-deployment issues.
 
 ### Azure Resources (Dev Environment)
 
 ```
 Resource Group: rg-logmw-dev
-├── App Service Plan (Linux B1)
+├── App Service Plan (Linux S1)
 ├── App Service (app-logmw-dev)
 │   ├── Production Slot (blue)
 │   └── Green Slot (staging)
@@ -74,6 +84,18 @@ Resource Group: rg-logmw-dev
 ### Run Locally
 ```bash
 cd app && dotnet run
+```
+
+### Run Tests
+```bash
+# Unit tests
+dotnet test tests/AzureAppServiceLoggingMiddleware.UnitTests/
+
+# Integration tests
+dotnet test tests/AzureAppServiceLoggingMiddleware.IntegrationTests/
+
+# All tests
+dotnet test
 ```
 
 ### Deploy to Azure
@@ -134,6 +156,8 @@ See [Setup Guide](setup-guide.md) for detailed instructions.
 - ☑️ Modular architecture
 - ☑️ Application Insights integration
 - ☑️ OpenAPI/Swagger
+- ☑️ Unit testing (xUnit, Moq, FluentAssertions)
+- ☑️ Integration testing (WebApplicationFactory)
 
 ### Best Practices
 - ☑️ Clean architecture
@@ -142,25 +166,35 @@ See [Setup Guide](setup-guide.md) for detailed instructions.
 - ☑️ Documentation
 - ☑️ Git workflows
 - ☑️ Automated deployments
+- ☑️ Test-driven development
+- ☑️ CI/CD test integration
 
 ## 🎓 Learning Outcomes
 
 This project teaches:
 
 1. **IaC Fundamentals** - Manage infrastructure with code
-2. **CI/CD Pipelines** - Automate build, test, deploy
-3. **Cloud Patterns** - Blue-green, health checks, slots
+2. **CI/CD Pipelines** - Automate build, test, deploy with test result publishing
+3. **Cloud Patterns** - Blue-green, health checks, deployment slots
 4. **Security** - Sensitive data handling
 5. **Monitoring** - Application Insights integration
 6. **Architecture** - Modular, scalable design
+7. **Testing** - Unit and integration testing strategies
+8. **DevOps** - Dual rollback strategies (automatic and manual)
 
 ## 📊 Metrics & Monitoring
 
 ### Pipeline Metrics
-- **Build Time**: ~2-3 minutes
+- **Build Time**: ~2-3 minutes (includes unit + integration tests)
 - **Infrastructure Provisioning**: ~3-5 minutes (first), ~30s (update)
 - **Deployment Time**: ~1-2 minutes
-- **Total Pipeline**: ~7-11 minutes
+- **Total Pipeline**: ~8-12 minutes (7 stages + rollback capability)
+
+### Test Metrics
+- **Unit Tests**: 10 tests
+- **Integration Tests**: 8 tests
+- **Total Coverage**: 18 test cases
+- **Test Results**: Published to GitHub Actions Tests tab
 
 ### Application Metrics (via App Insights)
 - Request rates
@@ -209,6 +243,9 @@ Potential additions:
 - [ ] Load testing (k6, JMeter)
 - [ ] Container support (Docker)
 - [ ] Kubernetes deployment option
+- [ ] Code coverage reporting
+- [ ] Performance testing
+- [ ] Security scanning (SAST/DAST)
 
 ## 🤝 Contributing
 

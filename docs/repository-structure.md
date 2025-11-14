@@ -11,8 +11,17 @@ azure-appservice-logging-middleware/
 │   ├── Infrastructure/                    # Core infrastructure patterns
 │   ├── Middleware/                        # Obfuscation middleware
 │   ├── Modules/                           # Feature modules (Orders, Payments)
+│   ├── Properties/                        # Launch settings
+│   │   └── launchSettings.json            # Development environment config
 │   ├── Program.cs                         # Application entry point
 │   └── *.csproj                           # Project file
+│
+├── tests/                                 # Test Projects
+│   ├── AzureAppServiceLoggingMiddleware.UnitTests/
+│   │   └── Middleware/
+│   │       └── ObfuscationMiddlewareTests.cs
+│   └── AzureAppServiceLoggingMiddleware.IntegrationTests/
+│       └── ObfuscationMiddlewareIntegrationTests.cs
 │
 ├── infrastructure/                        # Infrastructure as Code (Terraform)
 │   ├── terraform/
@@ -36,7 +45,10 @@ azure-appservice-logging-middleware/
 │
 ├── .github/
 │   └── workflows/
-│       └── deploy-blue-green.yml         # Deployment pipeline (executed by GitHub)
+│       ├── deploy-blue-green.yml         # 7-stage deployment pipeline
+│       ├── manual-rollback.yml           # On-demand rollback workflow
+│       ├── ci-pr-validation.yml          # PR validation (build + terraform)
+│       └── _build-app.yml                # Reusable build workflow
 │
 ├── devops/                               # CI/CD Scripts & Docs
 │   ├── scripts/
@@ -49,7 +61,10 @@ azure-appservice-logging-middleware/
 │   ├── app-service-vs-functions.md
 │   ├── microservice-split-criteria.md
 │   ├── module-pattern.md
-│   └── pipeline-comparison.md
+│   ├── pipeline-comparison.md
+│   ├── project-summary.md
+│   ├── repository-structure.md           # This file
+│   └── setup-guide.md
 │
 └── README.md                             # Main repository README
 ```
@@ -67,6 +82,17 @@ Contains the .NET 9.0 minimal API application featuring:
 - `Program.cs` - Application startup and configuration
 - `Middleware/ObfuscationMiddleware.cs` - Core obfuscation logic
 - `Modules/*` - Self-contained feature modules
+- `Properties/launchSettings.json` - Development environment settings
+
+### `/tests` - Test Projects
+Comprehensive test coverage with unit and integration tests:
+- Unit tests for middleware logic (fast, isolated)
+- Integration tests for end-to-end API testing (WebApplicationFactory)
+- Test results published to GitHub Actions
+
+**Key Files:**
+- `UnitTests/Middleware/ObfuscationMiddlewareTests.cs` - Middleware unit tests
+- `IntegrationTests/ObfuscationMiddlewareIntegrationTests.cs` - E2E API tests
 
 ### `/infrastructure` - Infrastructure as Code
 Terraform configurations for provisioning Azure resources:
@@ -81,7 +107,10 @@ Terraform configurations for provisioning Azure resources:
 
 ### `/.github/workflows` - CI/CD Workflows
 GitHub Actions workflows executed on push/PR:
-- `deploy-blue-green.yml` - 6-stage deployment pipeline
+- `deploy-blue-green.yml` - 7-stage deployment pipeline with auto rollback
+- `manual-rollback.yml` - On-demand rollback for post-deployment issues
+- `ci-pr-validation.yml` - PR validation with build, tests, and Terraform preview
+- `_build-app.yml` - Reusable build workflow with test execution
 
 ### `/devops` - CI/CD Scripts & Documentation
 Deployment automation scripts and DevOps documentation:
@@ -108,18 +137,22 @@ Developer Push
       ↓
 GitHub Actions (.github/workflows/)
       ↓
-Stage 1: Build app/ code
+Stage 1: Build app/ code + run tests
       ↓
 Stage 2: Provision infrastructure/
       ↓
 Stage 3: Deploy to green slot
       ↓
-Stage 4: Run tests
+Stage 4: Run regression tests on green
       ↓
 Stage 5: Swap to production
       ↓
-Stage 6: Rollback (if needed)
+Stage 6: Run smoke tests on production
+      ↓
+Stage 7: Auto rollback (if Stage 6 fails)
 ```
+
+**Note:** Manual rollback workflow available for post-deployment issues.
 
 ## 🚀 Getting Started
 
@@ -127,6 +160,19 @@ Stage 6: Rollback (if needed)
 ```bash
 cd app
 dotnet run
+# Or press F5 in VS Code
+```
+
+### Run Tests
+```bash
+# Run all tests
+dotnet test
+
+# Run only unit tests
+dotnet test --filter "Category=Unit"
+
+# Run only integration tests
+dotnet test --filter "Category=Integration"
 ```
 
 ### Deploy Infrastructure
