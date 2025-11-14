@@ -52,6 +52,16 @@ app.UseHttpsRedirection();
 // Map all module endpoints
 app.MapEndpoints();
 
+// Root endpoint for Azure health probes
+app.MapGet("/", () => Results.Ok(new 
+{ 
+    status = "Healthy",
+    service = "Azure Logging Middleware API",
+    timestamp = DateTime.UtcNow
+}))
+.WithName("Root")
+.ExcludeFromDescription();
+
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new 
 { 

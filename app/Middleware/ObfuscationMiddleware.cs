@@ -22,6 +22,13 @@ public class ObfuscationMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Skip logging for health check endpoints
+        if (IsHealthCheckEndpoint(context.Request.Path))
+        {
+            await _next(context);
+            return;
+        }
+
         string? requestBody = null;
         string? responseBody = null;
 
@@ -206,6 +213,12 @@ public class ObfuscationMiddleware
         // Case-insensitive comparison with configured sensitive properties
         return _options.SensitiveProperties.Any(
             p => string.Equals(p, propertyName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsHealthCheckEndpoint(PathString path)
+    {
+        // Skip logging for health check and root endpoints
+        return path.Value == "/" || path.Value == "/health";
     }
 
     private string ObfuscateValue(System.Text.Json.JsonElement value)

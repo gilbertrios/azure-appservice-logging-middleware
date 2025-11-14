@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "type": "coreclr",
+      "request": "launch",
+      "name": "Launch .NET Core App",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/app/bin/Debug/net9.0/AzureAppServiceLoggingMiddleware.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/app",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  ]
+}
