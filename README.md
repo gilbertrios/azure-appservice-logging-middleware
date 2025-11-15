@@ -9,14 +9,14 @@ A production-ready ASP.NET Core minimal API showcasing **automatic sensitive dat
 
 ## 🎯 Key Features
 
-- **🔐 Smart Obfuscation Middleware** - Automatically redacts sensitive data (credit cards, passwords, tokens) from logs before they reach Application Insights
-- **☁️ Azure Application Insights Integration** - Seamless telemetry with custom properties and structured logging
-- **🧩 Modular Architecture** - Self-contained modules (Orders, Payments) ready for microservice extraction
-- **⚡ .NET 9 Minimal APIs** - Fast, lightweight, modern ASP.NET Core
-- **📝 Auto-Discovery** - Modules automatically registered via reflection
-- **🔧 Configurable** - Control obfuscation patterns via `appsettings.json`
-- **📚 OpenAPI/Swagger** - Full API documentation out of the box
-- **🚀 Production-Ready** - Includes health checks, structured logging, and comprehensive testing
+- **Smart Obfuscation Middleware** - Automatically redacts sensitive data (credit cards, passwords, tokens) from logs before they reach Application Insights
+- **Azure Application Insights Integration** - Seamless telemetry with custom properties and structured logging
+- **Modular Architecture** - Self-contained modules (Orders, Payments) ready for microservice extraction
+- **.NET 9 Minimal APIs** - Fast, lightweight, modern ASP.NET Core
+- **Auto-Discovery** - Modules automatically registered via reflection
+- **Configurable** - Control obfuscation patterns via `appsettings.json`
+- **OpenAPI/Swagger** - Full API documentation out of the box
+- **Production-Ready** - Includes health checks, structured logging, and comprehensive testing
 
 ## 🌟 What This Repo Demonstrates
 
@@ -46,7 +46,154 @@ A production-ready ASP.NET Core minimal API showcasing **automatic sensitive dat
 - ✅ Security-first approach (data obfuscation)
 - ✅ Health checks and monitoring
 
-## 🚀 Quick Start
+## �️ Tech Stack
+
+### Application
+- **.NET 9.0** - ASP.NET Core minimal APIs
+- **C# 13** - Records, pattern matching, modern features
+- **Application Insights** - Azure monitoring and telemetry
+- **Swagger/OpenAPI** - API documentation
+
+### Infrastructure & DevOps
+- **Terraform** - Infrastructure as Code
+- **Azure App Service** - Linux-based hosting
+- **GitHub Actions** - CI/CD automation
+- **Bash Scripts** - Deployment utilities
+
+## 🏗️ Repository Architecture
+
+```
+azure-appservice-logging-middleware/
+├── .github/
+│   └── workflows/
+│       ├── deploy-blue-green.yml     # 7-stage deployment pipeline (auto rollback)
+│       ├── manual-rollback.yml       # On-demand rollback workflow
+│       ├── ci-pr-validation.yml      # PR validation (build + terraform)
+│       └── _build-app.yml            # Reusable build workflow
+│
+├── app/                              # .NET 9.0 Application
+│   ├── Infrastructure/               # Module pattern implementation
+│   ├── Middleware/                   # Obfuscation middleware
+│   ├── Modules/                      # Orders & Payments modules
+│   ├── Properties/                   # launchSettings.json
+│   └── Program.cs
+│
+├── tests/                            # Test Projects
+│   ├── AzureAppServiceLoggingMiddleware.UnitTests/
+│   │   └── Middleware/
+│   │       └── ObfuscationMiddlewareTests.cs
+│   └── AzureAppServiceLoggingMiddleware.IntegrationTests/
+│       └── ObfuscationMiddlewareIntegrationTests.cs
+│
+├── infrastructure/                   # Terraform IaC
+│   ├── terraform/
+│   │   ├── environments/
+│   │   │   └── dev/                  # Dev environment config
+│   │   └── modules/
+│   │       └── app-service/          # App Service with slots
+│   └── scripts/
+│
+└── docs/                            # Documentation
+```
+
+See [Repository Structure](docs/repository-structure.md) for detailed breakdown.
+
+### Module Pattern Benefits
+
+Each module is:
+- **Self-contained** - All domain code in one folder
+- **Testable** - Clear boundaries and interfaces
+- **Discoverable** - Auto-registered via reflection
+- **Extractable** - Ready for microservice split
+
+## �🚀 CI/CD Pipeline
+
+### 7-Stage Blue-Green Deployment (Automatic)
+
+```
+Stage 1: Build Application
+   ↓
+Stage 2: Provision Infrastructure (Terraform)
+   ↓
+Stage 3: Deploy to Green Slot
+   ↓
+Stage 4: Regression Tests on Green (comprehensive)
+   ↓
+Stage 5: Swap Green to Production
+   ↓
+Stage 6: Smoke Tests on Production (quick validation)
+   ↓
+Stage 7: Auto Rollback (if smoke tests fail)
+```
+
+**Triggers:** Push to `main` branch with changes to `app/**`, `infrastructure/**`, or `.github/workflows/**`
+
+### Manual Rollback Workflow
+
+On-demand rollback for post-deployment issues:
+
+1. Go to **Actions** → **Manual Rollback**
+2. Click **Run workflow**
+3. Select environment: `dev`
+4. Type confirmation: `ROLLBACK`
+5. Review current state
+6. Approve deployment (if environment protection enabled)
+7. Rollback executes
+
+**Use cases:**
+- Issues discovered after successful deployment
+- Performance degradation in production
+- Business decision to revert changes
+- Bug found by users (not caught in automated tests)
+
+### Rollback Strategy
+
+**Auto Rollback (Stage 7):**
+- ✅ Triggers when production smoke tests fail
+- ✅ Restores previous version automatically
+- ✅ Verifies rollback succeeded
+- ❌ Does NOT trigger for green slot test failures (production safe)
+
+**Manual Rollback (Separate Workflow):**
+- ✅ Full control over timing
+- ✅ Validates current state before rollback
+- ✅ Requires explicit confirmation
+- ✅ Optional approval gate
+
+### Automatic Deployment
+
+Push to `main` branch triggers the deployment pipeline:
+
+```bash
+git add .
+git commit -m "feat: new feature"
+git push origin main
+```
+
+**Pipeline behavior:**
+- Runs all 7 stages automatically
+- Auto rollback only if production smoke tests fail
+- Green slot test failures stop pipeline (production untouched)
+
+### Pull Request Validation
+
+Create PR to `main` triggers CI validation:
+
+```bash
+git checkout -b feature/new-feature
+git add .
+git commit -m "feat: add new feature"
+git push origin feature/new-feature
+# Create PR on GitHub
+```
+
+**CI Pipeline runs:**
+- ✅ Build and test application
+- ✅ Validate Terraform formatting
+- ✅ Terraform plan (preview infrastructure changes)
+- ✅ Comment PR with Terraform plan output
+
+## 💻 Quick Start
 
 ### Run Application Locally
 
@@ -109,52 +256,6 @@ curl -X POST http://localhost:5000/api/payments/process \
 ```
 
 ✅ **Actual API response remains unchanged** - only logs are obfuscated!
-
-## 🏗️ Repository Architecture
-
-```
-azure-appservice-logging-middleware/
-├── .github/
-│   └── workflows/
-│       ├── deploy-blue-green.yml     # 7-stage deployment pipeline (auto rollback)
-│       ├── manual-rollback.yml       # On-demand rollback workflow
-│       ├── ci-pr-validation.yml      # PR validation (build + terraform)
-│       └── _build-app.yml            # Reusable build workflow
-│
-├── app/                              # .NET 9.0 Application
-│   ├── Infrastructure/               # Module pattern implementation
-│   ├── Middleware/                   # Obfuscation middleware
-│   ├── Modules/                      # Orders & Payments modules
-│   ├── Properties/                   # launchSettings.json
-│   └── Program.cs
-│
-├── tests/                            # Test Projects
-│   ├── AzureAppServiceLoggingMiddleware.UnitTests/
-│   │   └── Middleware/
-│   │       └── ObfuscationMiddlewareTests.cs
-│   └── AzureAppServiceLoggingMiddleware.IntegrationTests/
-│       └── ObfuscationMiddlewareIntegrationTests.cs
-│
-├── infrastructure/                   # Terraform IaC
-│   ├── terraform/
-│   │   ├── environments/
-│   │   │   └── dev/                  # Dev environment config
-│   │   └── modules/
-│   │       └── app-service/          # App Service with slots
-│   └── scripts/
-│
-└── docs/                            # Documentation
-```
-
-See [Repository Structure](docs/repository-structure.md) for detailed breakdown.
-
-### Module Pattern Benefits
-
-Each module is:
-- **Self-contained** - All domain code in one folder
-- **Testable** - Clear boundaries and interfaces
-- **Discoverable** - Auto-registered via reflection
-- **Extractable** - Ready for microservice split
 
 ## 📡 API Endpoints
 
@@ -341,104 +442,17 @@ curl -X POST http://localhost:5000/api/payments/process \
 - [Repository Structure](docs/repository-structure.md) - Folder organization
 - [Module Pattern Overview](docs/module-pattern.md) - Modular architecture
 - [Microservice Split Criteria](docs/microservice-split-criteria.md) - When to extract
+- [MVC vs Minimal API Pipeline](docs/mvc-vs-minimal-api-pipeline.md) - Request pipeline internals
 
 ### Infrastructure & DevOps
 - [Infrastructure Guide](infrastructure/README.md) - Terraform and Azure resources
 - [Setup Guide](docs/setup-guide.md) - Deploy to Azure step-by-step
 - [App Service vs Functions](docs/app-service-vs-functions.md) - Service comparison
-- [Pipeline Comparison](docs/pipeline-comparison.md) - CI/CD strategies
 
 ### Application
 - [Application README](app/README.md) - Run and develop locally
 
-## 🚀 CI/CD Pipeline
-
-### 7-Stage Blue-Green Deployment (Automatic)
-
-```
-Stage 1: Build Application
-   ↓
-Stage 2: Provision Infrastructure (Terraform)
-   ↓
-Stage 3: Deploy to Green Slot
-   ↓
-Stage 4: Regression Tests on Green (comprehensive)
-   ↓
-Stage 5: Swap Green to Production
-   ↓
-Stage 6: Smoke Tests on Production (quick validation)
-   ↓
-Stage 7: Auto Rollback (if smoke tests fail)
-```
-
-**Triggers:** Push to `main` branch with changes to `app/**`, `infrastructure/**`, or `.github/workflows/**`
-
-### Manual Rollback Workflow
-
-On-demand rollback for post-deployment issues:
-
-1. Go to **Actions** → **Manual Rollback**
-2. Click **Run workflow**
-3. Select environment: `dev`
-4. Type confirmation: `ROLLBACK`
-5. Review current state
-6. Approve deployment (if environment protection enabled)
-7. Rollback executes
-
-**Use cases:**
-- Issues discovered after successful deployment
-- Performance degradation in production
-- Business decision to revert changes
-- Bug found by users (not caught in automated tests)
-
-### Rollback Strategy
-
-**Auto Rollback (Stage 7):**
-- ✅ Triggers when production smoke tests fail
-- ✅ Restores previous version automatically
-- ✅ Verifies rollback succeeded
-- ❌ Does NOT trigger for green slot test failures (production safe)
-
-**Manual Rollback (Separate Workflow):**
-- ✅ Full control over timing
-- ✅ Validates current state before rollback
-- ✅ Requires explicit confirmation
-- ✅ Optional approval gate
-
-### Automatic Deployment
-
-Push to `main` branch triggers the deployment pipeline:
-
-```bash
-git add .
-git commit -m "feat: new feature"
-git push origin main
-```
-
-**Pipeline behavior:**
-- Runs all 7 stages automatically
-- Auto rollback only if production smoke tests fail
-- Green slot test failures stop pipeline (production untouched)
-
-### Pull Request Validation
-
-Create PR to `main` triggers CI validation:
-
-```bash
-git checkout -b feature/new-feature
-git add .
-git commit -m "feat: add new feature"
-git push origin feature/new-feature
-# Create PR on GitHub
-```
-
-**CI Pipeline runs:**
-- ✅ Build and test application
-- ✅ Validate Terraform formatting
-- ✅ Terraform plan (preview infrastructure changes)
-- ✅ Comment PR with Terraform plan output
-
-## 🔄 Migration Path
+##  Migration Path
 
 Ready for microservice extraction:
 
@@ -448,21 +462,7 @@ Ready for microservice extraction:
 
 Each module has clear boundaries and can be independently deployed.
 
-## 🛠️ Tech Stack
-
-### Application
-- **.NET 9.0** - ASP.NET Core minimal APIs
-- **C# 13** - Records, pattern matching, modern features
-- **Application Insights** - Azure monitoring and telemetry
-- **Swagger/OpenAPI** - API documentation
-
-### Infrastructure & DevOps
-- **Terraform** - Infrastructure as Code
-- **Azure App Service** - Linux-based hosting
-- **GitHub Actions** - CI/CD automation
-- **Bash Scripts** - Deployment utilities
-
-## 📝 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -482,7 +482,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - 📧 Email: gilbertrios@hotmail.com
 - 💡 GitHub: [@gilbertrios](https://github.com/gilbertrios)
 
-##  Quick Links
+## 🎓 Quick Links
 
 - **[Setup Guide](docs/setup-guide.md)** - Deploy to Azure in 10 steps
 - **[Project Summary](docs/project-summary.md)** - Overview and key decisions
