@@ -1,4 +1,4 @@
-# Azure App Service Logging Middleware 🔒
+# Azure App Service Logging Middleware
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Azure](https://img.shields.io/badge/Azure-App%20Service-0078D4?logo=microsoft-azure)](https://azure.microsoft.com/en-us/services/app-service/)
@@ -17,6 +17,34 @@ A production-ready ASP.NET Core minimal API showcasing **automatic sensitive dat
 - **🔧 Configurable** - Control obfuscation patterns via `appsettings.json`
 - **📚 OpenAPI/Swagger** - Full API documentation out of the box
 - **🚀 Production-Ready** - Includes health checks, structured logging, and comprehensive testing
+
+## 🌟 What This Repo Demonstrates
+
+### Infrastructure as Code (IaC)
+- ✅ Terraform modules and environments
+- ✅ Azure resource provisioning
+- ✅ Infrastructure versioning and state management
+
+### DevOps & CI/CD
+- ✅ 7-stage automated deployment pipeline
+- ✅ Blue-green deployment with dual rollback strategies
+- ✅ Automated testing (regression + smoke tests)
+- ✅ PR validation with Terraform plan preview
+- ✅ Reusable workflows for code reuse
+- ✅ Auto rollback on production failures
+- ✅ Manual rollback for on-demand recovery
+
+### Development Best Practices
+- ✅ Modular architecture (Orders, Payments modules)
+- ✅ Custom middleware (obfuscation)
+- ✅ Clean code and SOLID principles
+- ✅ Modern .NET 9.0 patterns
+
+### Cloud & Observability
+- ✅ Azure App Service deployment slots
+- ✅ Application Insights integration
+- ✅ Security-first approach (data obfuscation)
+- ✅ Health checks and monitoring
 
 ## 🚀 Quick Start
 
@@ -448,41 +476,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 👤 Author
+## 📞 Support & Connect
 
-**Gilbert Rios**
+- 💼 LinkedIn: [Connect with me](https://linkedin.com/in/gilbert-rios-22586918)
+- 📧 Email: gilbertrios@hotmail.com
+- 💡 GitHub: [@gilbertrios](https://github.com/gilbertrios)
 
-- GitHub: [@gilbertrios](https://github.com/gilbertrios)
-
-## 🌟 What This Repo Demonstrates
-
-### Infrastructure as Code (IaC)
-- ✅ Terraform modules and environments
-- ✅ Azure resource provisioning
-- ✅ Infrastructure versioning and state management
-
-### DevOps & CI/CD
-- ✅ 7-stage automated deployment pipeline
-- ✅ Blue-green deployment with dual rollback strategies
-- ✅ Automated testing (regression + smoke tests)
-- ✅ PR validation with Terraform plan preview
-- ✅ Reusable workflows for code reuse
-- ✅ Auto rollback on production failures
-- ✅ Manual rollback for on-demand recovery
-
-### Development Best Practices
-- ✅ Modular architecture (Orders, Payments modules)
-- ✅ Custom middleware (obfuscation)
-- ✅ Clean code and SOLID principles
-- ✅ Modern .NET 9.0 patterns
-
-### Cloud & Observability
-- ✅ Azure App Service deployment slots
-- ✅ Application Insights integration
-- ✅ Security-first approach (data obfuscation)
-- ✅ Health checks and monitoring
-
-## 🎓 Quick Links
+##  Quick Links
 
 - **[Setup Guide](docs/setup-guide.md)** - Deploy to Azure in 10 steps
 - **[Project Summary](docs/project-summary.md)** - Overview and key decisions
