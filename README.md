@@ -46,7 +46,7 @@ A production-ready ASP.NET Core minimal API showcasing **automatic sensitive dat
 - ✅ Security-first approach (data obfuscation)
 - ✅ Health checks and monitoring
 
-## �️ Tech Stack
+## 🛠️ Tech Stack
 
 ### Application
 - **.NET 9.0** - ASP.NET Core minimal APIs
@@ -98,13 +98,15 @@ azure-appservice-logging-middleware/
 
 See [Repository Structure](docs/repository-structure.md) for detailed breakdown.
 
-### Module Pattern Benefits
+**Module Pattern Benefits:**
 
-Each module is:
+Each module is self-contained and follows these principles:
 - **Self-contained** - All domain code in one folder
 - **Testable** - Clear boundaries and interfaces
 - **Discoverable** - Auto-registered via reflection
 - **Extractable** - Ready for microservice split
+
+See [Module Pattern Guide](docs/module-pattern.md) for implementation details and best practices.
 
 ## 🚀 CI/CD Pipeline
 
@@ -195,31 +197,12 @@ curl -X POST http://localhost:5000/api/payments/process \
 
 ## 📡 API Endpoints
 
-### Orders Module
-```
-GET    /api/orders                  - List all orders
-GET    /api/orders/{id}             - Get order by ID
-POST   /api/orders                  - Create new order
-PUT    /api/orders/{id}             - Update order
-DELETE /api/orders/{id}             - Delete order
-POST   /api/orders/{id}/cancel      - Cancel order
-GET    /api/orders/{id}/status      - Get order status
-```
+Explore the API using Swagger UI at `/swagger` when running locally, or view the full endpoint documentation in the [Application README](app/README.md).
 
-### Payments Module
-```
-GET    /api/payments                       - List all payments
-GET    /api/payments/{id}                  - Get payment by ID
-GET    /api/payments/order/{orderId}       - Get payment for order
-POST   /api/payments/process               - Process payment
-POST   /api/payments/{id}/refund           - Refund payment
-GET    /api/payments/transactions          - Get payments by date range
-```
-
-### Health Check
-```
-GET    /health                      - API health status
-```
+**Modules:**
+- **Orders** - Order management and status tracking
+- **Payments** - Payment processing and refunds
+- **Health Check** - API health status
 
 ## ⚙️ Configuration
 
@@ -244,48 +227,22 @@ See [Configuration Guide](docs/configuration.md) for complete options, Applicati
 
 ## ☁️ Azure Infrastructure
 
-### Provisioned Resources (Dev Environment)
+Uses Terraform to provision Azure App Service with blue-green deployment slots for zero-downtime releases.
 
-```
-Resource Group: rg-logmw-dev
-├── App Service Plan (Linux, S1)  # S1 required for deployment slots
-├── App Service
-│   ├── Production Slot (blue)
-│   └── Green Slot (staging)
-├── Application Insights
-└── Log Analytics Workspace (7-day retention)
-```
+**Resources provisioned:**
+- App Service Plan (Linux, S1) with deployment slots
+- App Service (production + green slot for zero-downtime deployments)
+- Application Insights for telemetry and monitoring
+- Log Analytics Workspace
 
-### Blue-Green Deployment Slots
-
-- **Production Slot** - Current live version
-- **Green Slot** - New version testing
-- **Instant Swap** - Zero-downtime deployment
-- **Quick Rollback** - Swap back if issues detected
-
-### Deploy Infrastructure
-
+**Deploy infrastructure:**
 ```bash
 cd infrastructure/terraform/environments/dev
 terraform init
 terraform apply
 ```
 
-See [Infrastructure README](infrastructure/README.md) for details.
-
-## 📊 Application Insights Integration
-
-The middleware automatically logs obfuscated request/response data to Application Insights:
-
-| Property | Description |
-|----------|-------------|
-| `RequestPath` | The endpoint called |
-| `RequestMethod` | HTTP method (POST, GET, etc.) |
-| `StatusCode` | Response status code |
-| `ObfuscatedRequest` | Request body with sensitive data masked |
-| `ObfuscatedResponse` | Response body with sensitive data masked |
-
-Application Insights connection is configured automatically via Terraform during deployment.
+See [Infrastructure README](infrastructure/README.md) for complete details on resources, configuration, and Terraform modules.
 
 ## 🧪 Testing
 
@@ -328,17 +285,11 @@ See [Testing Guide](docs/testing-guide.md) for detailed test documentation, manu
 - [Testing Guide](docs/testing-guide.md) - Test strategy, commands, and coverage
 - [Configuration Guide](docs/configuration.md) - Application settings and options
 
-##  Migration Path
+## 🔄 Migration Path
 
-Ready for microservice extraction:
+Ready for microservice extraction. See [Microservice Split Criteria](docs/microservice-split-criteria.md) for detailed guidance.
 
-1. **Orders Service** - Extract `/Modules/Orders` to standalone service
-2. **Payments Service** - Extract `/Modules/Payments` to standalone service
-3. **Shared Middleware** - Keep obfuscation middleware as NuGet package
-
-Each module has clear boundaries and can be independently deployed.
-
-##  License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
